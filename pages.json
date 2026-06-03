@@ -26,6 +26,19 @@
 				"navigationBarTitleText": "我喜欢的",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/play/play",
+			"style": {
+				"navigationBarTitleText": "播放",
+				"navigationStyle": "custom",
+				"backgroundColor": "#000000",
+				"disableScroll": true,
+				"app-plus": {
+					"backgroundColorTop": "#000000",
+					"animationType": "fade-in"
+				}
+			}
 		}
 	],
 	"globalStyle": {

@@ -91,9 +91,9 @@
 							</view>
 						</view>
 						<view class="card-body">
-							<text class="card-title">{{ item.title || item.id }}</text>
+							<!-- <text class="card-title">{{ item.title || item.id }}</text> -->
 							<view class="card-stats">
-								<text class="stat-item" v-if="item.pv">&#9654; {{ formatCount(item.pv) }}</text>
+								<text class="stat-item" v-if="item.pv">热度 {{ formatCount(item.pv) }}</text>
 								<text class="stat-item" v-if="item.favorite">&#9829; {{ formatCount(item.favorite) }}</text>
 							</view>
 						</view>
@@ -131,9 +131,9 @@
 							</view>
 						</view>
 						<view class="card-body">
-							<text class="card-title">{{ item.title || item.id }}</text>
+							<!-- <text class="card-title">{{ item.title || item.id }}</text> -->
 							<view class="card-stats">
-								<text class="stat-item" v-if="item.pv">&#9654; {{ formatCount(item.pv) }}</text>
+								<text class="stat-item" v-if="item.pv">热度 {{ formatCount(item.pv) }}</text>
 								<text class="stat-item" v-if="item.favorite">&#9829; {{ formatCount(item.favorite) }}</text>
 							</view>
 						</view>
@@ -230,23 +230,11 @@
 				</view>
 			</view>
 		</view>
-
-		<!-- 视频播放 - scroll-video 组件 -->
-		<scroll-video
-			v-if="showPreview"
-			ref="scrollVideo"
-			:videoList="previewVideoList"
-			:initialIndex="previewIndex"
-			@close="closePreview"
-			@clickEventListener="onVideoClick"
-			@scrollVideoChange="onVideoChange"
-		/>
 	</view>
 </template>
 
 <script>
-	import ScrollVideo from '@/components/scroll-video/scroll-video.vue';
-import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
+import { getFavoriteIds } from '@/utils/db.js';
 
 	const MEDIA_API_URL = 'https://truvaze.com/api/media';
 
@@ -304,7 +292,6 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 	];
 
 	export default {
-		components: { ScrollVideo },
 		data() {
 			return {
 				tabs: [{ code: '', name: '全部' }],
@@ -318,9 +305,6 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 				refreshing: false,
 				loadError: '',
 				showSettings: false,
-				showPreview: false,
-				previewIndex: 0,
-				previewItem: null,
 				favoriteIds: new Set(),
 				downloading: false,
 				downloadProgress: '',
@@ -405,6 +389,14 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 					commentCount: null,
 					collectActive: false,
 					collectCount: null,
+					fav: {
+						id: item.id,
+						title: item.title || item.id,
+						url: item.url,
+						thumbnail: item.thumbnail || '',
+						source: 'waterfall',
+						extra: { duration: item.duration, favorite: item.favorite, pv: item.pv },
+					},
 				}));
 			},
 		},
@@ -418,10 +410,6 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 			this.loadFavoriteIds();
 		},
 		onBackPress() {
-			if (this.showPreview) {
-				this.closePreview();
-				return true;
-			}
 			if (this.showSettings) {
 				this.showSettings = false;
 				return true;
@@ -605,37 +593,23 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 			},
 			openPreview(index) {
 				if (!this.items.length) return;
-				this.previewIndex = index;
-				this.previewItem = this.items[index] || null;
-				this.showPreview = true;
-			},
-			closePreview() {
-				this.showPreview = false;
-				this.previewItem = null;
-				this.previewIndex = 0;
-			},
-			onVideoChange(index) {
-				this.previewIndex = index;
-				this.previewItem = this.items[index] || null;
+				const list = this.previewVideoList;
+				uni.navigateTo({
+					url: '/pages/play/play',
+					success: (res) => {
+						res.eventChannel.emit('initData', { list, index });
+						res.eventChannel.on('toggleLike', (payload) => {
+							this.onVideoClick({ type: 'like', index: payload.index, active: payload.active });
+						});
+					},
+				});
 			},
 			onVideoClick(e) {
 				if (e.type === 'like') {
 					const item = this.items[e.index];
 					if (!item) return;
-					if (e.active) {
-						addFavorite({
-							id: item.id,
-							title: item.title || item.id,
-							url: item.url,
-							thumbnail: item.thumbnail || '',
-							source: 'waterfall',
-							extra: { duration: item.duration, favorite: item.favorite, pv: item.pv },
-						});
-						this.favoriteIds.add(item.id);
-					} else {
-						removeFavorite(item.id);
-						this.favoriteIds.delete(item.id);
-					}
+					if (e.active) this.favoriteIds.add(item.id);
+					else this.favoriteIds.delete(item.id);
 					this.favoriteIds = new Set(this.favoriteIds);
 				}
 				// 评论、收藏目前只是摆设
@@ -661,7 +635,9 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 				this.downloading = false;
 				this.downloadProgress = '';
 				this.selectedIds = new Set();
-				uni.showModal({ title: '下载完成', content: `成功 ${success}，失败 ${failed}`, showCancel: false });
+				if (failed > 0) {
+					uni.showToast({ title: failed + ' 个下载失败', icon: 'none' });
+				}
 			},
 			downloadOneFile(item) {
 				return new Promise((resolve, reject) => {

@@ -97,36 +97,20 @@
 				</text>
 			</view>
 		</view>
-
-		<!-- 视频播放 - scroll-video 组件 -->
-		<scroll-video
-			v-if="showPlayer"
-			ref="scrollVideo"
-			:videoList="playVideoList"
-			:initialIndex="playingIndex"
-			@close="closePlayer"
-			@clickEventListener="onVideoClick"
-			@scrollVideoChange="onVideoChange"
-		/>
 	</view>
 </template>
 
 <script>
-import ScrollVideo from '@/components/scroll-video/scroll-video.vue';
-import { getFavorites, removeFavorite, addFavorite } from '@/utils/db.js';
+import { getFavorites, removeFavorite } from '@/utils/db.js';
 
 const UNLIKE_BTN_WIDTH = 180;
 
 export default {
-	components: { ScrollVideo },
 	data() {
 		return {
 			favorites: [],
 			isEditMode: false,
 			selectedIds: new Set(),
-			showPlayer: false,
-			playingIndex: 0,
-			playingFile: null,
 			swipeOffset: {},
 			touchStartX: 0,
 			touchStartY: 0,
@@ -153,18 +137,19 @@ export default {
 				commentCount: null,
 				collectActive: false,
 				collectCount: null,
+				fav: {
+					id: item.id,
+					title: item.title || item.id,
+					url: item.url,
+					thumbnail: item.thumbnail || '',
+					source: item.source || 'favorites',
+					extra: item.extra || {},
+				},
 			}));
 		},
 	},
 	onShow() {
 		this.loadFavorites();
-	},
-	onBackPress() {
-		if (this.showPlayer) {
-			this.closePlayer();
-			return true;
-		}
-		return false;
 	},
 	methods: {
 		async loadFavorites() {
@@ -318,28 +303,14 @@ export default {
 
 		// ===== 播放 =====
 		playFile(index) {
-			this.playingIndex = index;
-			this.playingFile = this.favorites[index];
-			this.showPlayer = true;
-		},
-		closePlayer() {
-			this.showPlayer = false;
-			this.playingFile = null;
-			this.playingIndex = 0;
-		},
-		onVideoChange(index) {
-			this.playingIndex = index;
-			this.playingFile = this.favorites[index] || null;
-		},
-		onVideoClick(e) {
-			// 在收藏列表中已经是已收藏状态，如果取消收藏则刷新
-			if (e.type === 'like' && !e.active) {
-				const item = this.favorites[e.index];
-				if (item) {
-					removeFavorite(item.id);
-					this.loadFavorites();
-				}
-			}
+			if (!this.favorites.length) return;
+			const list = this.playVideoList;
+			uni.navigateTo({
+				url: '/pages/play/play',
+				success: (res) => {
+					res.eventChannel.emit('initData', { list, index });
+				},
+			});
 		},
 	},
 };

@@ -1,0 +1,226 @@
+<template>
+	<view class="wrap" :style="screenStyle">
+		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" @change="onChange">
+			<swiper-item v-for="(item, idx) in videoList" :key="idx">
+				<view class="slide" :style="screenStyle">
+					<video
+						:id="'pv-' + idx"
+						class="video"
+						:style="videoStyle"
+						:src="isNear(idx) ? item.src : ''"
+						:poster="item.poster || ''"
+						:autoplay="idx === current"
+						:loop="true"
+						:controls="true"
+						:show-fullscreen-btn="false"
+						:show-center-play-btn="true"
+						:enable-progress-gesture="false"
+						object-fit="contain"
+					></video>
+
+					<!-- 左上返回 -->
+					<view class="back" :style="{ top: backTop + 'px' }" @click="goBack">
+						<image class="back-icon" src="/static/back.png"></image>
+					</view>
+
+					<!-- 右侧交互栏 -->
+					<view class="bar">
+						<view class="item">
+							<image class="avatar" src="/static/ling.jpg"></image>
+						</view>
+						<view class="item" @click="toggleLike(idx)">
+							<image
+								class="icon"
+								:src="'/static/scroll-video/' + (item.likeActive ? 'like_active' : 'like') + '.png'"
+							></image>
+							<text class="total">{{ item.likeCount ? item.likeCount : '赞' }}</text>
+						</view>
+						<view class="item" @click="prev">
+							<text class="arrow">&#9650;</text>
+						</view>
+						<view class="item" @click="next">
+							<text class="arrow">&#9660;</text>
+						</view>
+						<view class="item" @click="toggleLandscape">
+							<image class="icon" src="/static/h.png"></image>
+						</view>
+					</view>
+				</view>
+			</swiper-item>
+		</swiper>
+	</view>
+</template>
+
+<script>
+	import { addFavorite, removeFavorite } from '@/utils/db.js';
+
+	export default {
+		data() {
+			return {
+				videoList: [],
+				current: 0,
+				windowWidth: 375,
+				windowHeight: 667,
+				statusBarHeight: 20,
+				videoPad: 24,
+				channel: null,
+			};
+		},
+		computed: {
+			screenStyle() {
+				return { width: this.windowWidth + 'px', height: this.windowHeight + 'px' };
+			},
+			videoStyle() {
+				const pad = this.videoPad;
+				return {
+					left: pad + 'px',
+					top: pad + 'px',
+					width: (this.windowWidth - pad * 2) + 'px',
+					height: (this.windowHeight - pad * 2) + 'px',
+				};
+			},
+			backTop() {
+				return this.statusBarHeight + 6;
+			},
+		},
+		onLoad() {
+			const info = uni.getSystemInfoSync();
+			this.windowWidth = info.windowWidth;
+			this.windowHeight = info.windowHeight;
+			this.statusBarHeight = info.statusBarHeight || 20;
+
+			const ch = this.getOpenerEventChannel();
+			this.channel = ch;
+			ch.on('initData', (data) => {
+				this.videoList = data.list || [];
+				this.current = data.index || 0;
+				this.$nextTick(() => this.play(this.current));
+			});
+		},
+		onUnload() {
+			this.pause(this.current);
+		},
+		methods: {
+			isNear(idx) {
+				return idx >= this.current - 1 && idx <= this.current + 1;
+			},
+			onChange(e) {
+				const next = Number(e.detail.current);
+				if (Number.isNaN(next) || next === this.current) return;
+				this.pause(this.current);
+				this.current = next;
+				this.$nextTick(() => this.play(next));
+			},
+			play(index) {
+				const ctx = uni.createVideoContext('pv-' + index, this);
+				if (ctx) ctx.play();
+			},
+			pause(index) {
+				const ctx = uni.createVideoContext('pv-' + index, this);
+				if (ctx) ctx.pause();
+			},
+			goTo(target) {
+				if (target < 0 || target >= this.videoList.length) return;
+				if (target === this.current) return;
+				this.pause(this.current);
+				this.current = target;
+				this.$nextTick(() => this.play(target));
+			},
+			prev() {
+				this.goTo(this.current - 1);
+			},
+			next() {
+				this.goTo(this.current + 1);
+			},
+			toggleLandscape() {
+				const ctx = uni.createVideoContext('pv-' + this.current, this);
+				if (ctx) ctx.requestFullScreen({ direction: 90 });
+			},
+			toggleLike(index) {
+				const item = this.videoList[index];
+				if (!item) return;
+				const active = !item.likeActive;
+				this.videoList.splice(index, 1, Object.assign({}, item, { likeActive: active }));
+				if (item.fav && item.fav.id) {
+					if (active) {
+						addFavorite(item.fav);
+					} else {
+						removeFavorite(item.fav.id);
+					}
+				}
+				if (this.channel) this.channel.emit('toggleLike', { index, active });
+			},
+			goBack() {
+				uni.navigateBack({ delta: 1 });
+			},
+		},
+	};
+</script>
+
+<style>
+	.wrap {
+		background-color: #000000;
+	}
+	.swiper {
+		flex: 1;
+	}
+	.slide {
+		position: relative;
+	}
+	.video {
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+	.back {
+		position: absolute;
+		left: 24rpx;
+		width: 52rpx;
+		height: 52rpx;
+		justify-content: center;
+		align-items: center;
+	}
+	.back-icon {
+		width: 44rpx;
+		height: 44rpx;
+	}
+	.bar {
+		position: absolute;
+		right: 16rpx;
+		bottom: 200rpx;
+		width: 100rpx;
+		align-items: center;
+	}
+	.item {
+		align-items: center;
+		margin-bottom: 44rpx;
+	}
+	.icon {
+		width: 70rpx;
+		height: 70rpx;
+	}
+	.arrow {
+		width: 70rpx;
+		height: 70rpx;
+		font-size: 56rpx;
+		line-height: 70rpx;
+		color: #ffffff;
+		text-align: center;
+	}
+	.avatar {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 40rpx;
+		border-width: 3rpx;
+		border-style: solid;
+		border-color: #ffffff;
+		margin-bottom: 16rpx;
+	}
+	.total {
+		margin-top: 6rpx;
+		font-size: 22rpx;
+		color: #ffffff;
+		font-weight: bold;
+		text-align: center;
+	}
+</style>

@@ -95,36 +95,20 @@
 				</text>
 			</view>
 		</view>
-
-		<!-- 视频播放 - scroll-video 组件 -->
-		<scroll-video
-			v-if="showPlayer"
-			ref="scrollVideo"
-			:videoList="fileVideoList"
-			:initialIndex="playingIndex"
-			@close="closePlayer"
-			@clickEventListener="onVideoClick"
-			@scrollVideoChange="onVideoChange"
-		/>
 	</view>
 </template>
 
 <script>
-	import ScrollVideo from '@/components/scroll-video/scroll-video.vue';
-import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
+	import { getFavoriteIds } from '@/utils/db.js';
 
 	const DELETE_BTN_WIDTH = 160; // rpx
 
 	export default {
-		components: { ScrollVideo },
 		data() {
 			return {
 				files: [],
 				isEditMode: false,
 				selectedIds: new Set(),
-				showPlayer: false,
-				playingIndex: 0,
-				playingFile: null,
 				favoriteIds: new Set(),
 				swipeOffset: {},
 				touchStartX: 0,
@@ -153,19 +137,20 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 					commentCount: null,
 					collectActive: false,
 					collectCount: null,
+						fav: {
+							id: f.id,
+							title: f.title || f.id,
+							url: f.url,
+							thumbnail: f.thumbnail || '',
+							source: 'files',
+							extra: { filePath: f.filePath, downloadedAt: f.downloadedAt },
+						},
 				}));
 			},
 		},
 		onShow() {
 			this.loadFiles();
 			this.syncFavoriteIds();
-		},
-		onBackPress() {
-			if (this.showPlayer) {
-				this.closePlayer();
-				return true;
-			}
-			return false;
 		},
 		methods: {
 			loadFiles() {
@@ -306,37 +291,24 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 			},
 
 			playFile(index) {
-				this.playingIndex = index;
-				this.playingFile = this.files[index];
-				this.showPlayer = true;
-			},
-			closePlayer() {
-				this.showPlayer = false;
-				this.playingFile = null;
-				this.playingIndex = 0;
-			},
-			onVideoChange(index) {
-				this.playingIndex = index;
-				this.playingFile = this.files[index] || null;
+				if (!this.files.length) return;
+				const list = this.fileVideoList;
+				uni.navigateTo({
+					url: '/pages/play/play',
+					success: (res) => {
+						res.eventChannel.emit('initData', { list, index });
+						res.eventChannel.on('toggleLike', (payload) => {
+							this.onVideoClick({ type: 'like', index: payload.index, active: payload.active });
+						});
+					},
+				});
 			},
 			onVideoClick(e) {
 				if (e.type === 'like') {
 					const file = this.files[e.index];
 					if (!file) return;
-					if (e.active) {
-						addFavorite({
-							id: file.id,
-							title: file.title || file.id,
-							url: file.url,
-							thumbnail: file.thumbnail || '',
-							source: 'files',
-							extra: { filePath: file.filePath, downloadedAt: file.downloadedAt },
-						});
-						this.favoriteIds.add(file.id);
-					} else {
-						removeFavorite(file.id);
-						this.favoriteIds.delete(file.id);
-					}
+					if (e.active) this.favoriteIds.add(file.id);
+					else this.favoriteIds.delete(file.id);
 					this.favoriteIds = new Set(this.favoriteIds);
 				}
 			},
@@ -642,4 +614,5 @@ import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
 	.edit-delete-disabled {
 		opacity: 0.4;
 	}
+
 </style>
