@@ -184,48 +184,48 @@
 				</view>
 				<view class="sheet-body">
 					<view class="setting-group">
-						<view class="setting-row" @tap="triggerPicker('perPage')">
-							<text class="setting-label">每页数量</text>
-							<view class="setting-value-wrap">
-								<text class="setting-value">{{ settingsForm.perPage }}</text>
-								<text class="setting-arrow">&#8250;</text>
+						<picker :range="perPageOptions" @change="onPerPageChange" :value="perPageIndex">
+							<view class="setting-row">
+								<text class="setting-label">每页数量</text>
+								<view class="setting-value-wrap">
+									<text class="setting-value">{{ settingsForm.perPage }}</text>
+									<text class="setting-arrow">&#8250;</text>
+								</view>
 							</view>
-						</view>
-						<view class="setting-row" @tap="triggerPicker('sort')">
-							<text class="setting-label">排序方式</text>
-							<view class="setting-value-wrap">
-								<text class="setting-value">{{ currentSortLabel }}</text>
-								<text class="setting-arrow">&#8250;</text>
+						</picker>
+						<picker :range="sortLabels" @change="onSortChange" :value="settingsForm.sortIndex">
+							<view class="setting-row">
+								<text class="setting-label">排序方式</text>
+								<view class="setting-value-wrap">
+									<text class="setting-value">{{ currentSortLabel }}</text>
+									<text class="setting-arrow">&#8250;</text>
+								</view>
 							</view>
-						</view>
-						<view class="setting-row" @tap="triggerPicker('range')">
-							<text class="setting-label">时间范围</text>
-							<view class="setting-value-wrap">
-								<text class="setting-value">{{ currentRangeLabel }}</text>
-								<text class="setting-arrow">&#8250;</text>
+						</picker>
+						<picker :range="rangeLabels" @change="onRangeChange" :value="settingsForm.rangeIndex">
+							<view class="setting-row">
+								<text class="setting-label">时间范围</text>
+								<view class="setting-value-wrap">
+									<text class="setting-value">{{ currentRangeLabel }}</text>
+									<text class="setting-arrow">&#8250;</text>
+								</view>
 							</view>
-						</view>
-						<view class="setting-row last" @tap="triggerPicker('timeFilter')">
-							<text class="setting-label">时长筛选</text>
-							<view class="setting-value-wrap">
-								<text class="setting-value">{{ currentTimeFilterLabel }}</text>
-								<text class="setting-arrow">&#8250;</text>
+						</picker>
+						<picker :range="timeFilterLabels" @change="onTimeFilterChange" :value="settingsForm.timeFilterIndex">
+							<view class="setting-row last">
+								<text class="setting-label">时长筛选</text>
+								<view class="setting-value-wrap">
+									<text class="setting-value">{{ currentTimeFilterLabel }}</text>
+									<text class="setting-arrow">&#8250;</text>
+								</view>
 							</view>
-						</view>
+						</picker>
 					</view>
 				</view>
 				<view class="sheet-footer">
 					<text class="sheet-btn-primary" @tap="saveSettings">完成</text>
 				</view>
-				<!-- 隐藏 picker -->
-				<picker v-if="pickerType === 'perPage'" :range="perPageOptions" @change="onPerPageChange" :value="perPageIndex">
-				</picker>
-				<picker v-if="pickerType === 'sort'" :range="sortLabels" @change="onSortChange" :value="settingsForm.sortIndex">
-				</picker>
-				<picker v-if="pickerType === 'range'" :range="rangeLabels" @change="onRangeChange" :value="settingsForm.rangeIndex">
-				</picker>
-				<picker v-if="pickerType === 'timeFilter'" :range="timeFilterLabels" @change="onTimeFilterChange" :value="settingsForm.timeFilterIndex">
-				</picker>
+	
 			</view>
 		</view>
 
@@ -323,7 +323,6 @@
 				previewItem: null,
 				downloading: false,
 				downloadProgress: '',
-				pickerType: '',
 				config: {
 					per_page: 10,
 					sort: 'pv',
@@ -637,28 +636,17 @@
 				} catch (e) {}
 			},
 
-			triggerPicker(type) {
-				this.pickerType = type;
-				this.$nextTick(() => {
-					// picker 组件由 v-if 渲染后会自动弹出
-					// 需要手动触发，改用另一种方式
-				});
-			},
 			onPerPageChange(e) {
 				this.settingsForm.perPage = this.perPageOptions[e.detail.value];
-				this.pickerType = '';
 			},
 			onSortChange(e) {
 				this.settingsForm.sortIndex = e.detail.value;
-				this.pickerType = '';
 			},
 			onRangeChange(e) {
 				this.settingsForm.rangeIndex = e.detail.value;
-				this.pickerType = '';
 			},
 			onTimeFilterChange(e) {
 				this.settingsForm.timeFilterIndex = e.detail.value;
-				this.pickerType = '';
 			},
 			saveSettings() {
 				const sort = this.sortOptions[this.settingsForm.sortIndex];
