@@ -4,6 +4,7 @@
 			class="sv-swiper"
 			:vertical="true"
 			:current="currentIndex"
+			:disable-touch="true"
 			@change="onSwiperChange"
 		>
 			<swiper-item v-for="(item, index) in videoList" :key="index">
@@ -22,43 +23,53 @@
 						:show-play-btn="false"
 						:show-center-play-btn="false"
 						:enable-progress-gesture="false"
-						:page-gesture="false"
+						:vslide-gesture="false"
+						:vslide-gesture-in-fullscreen="false"
+						:page-gesture="true"
 						:object-fit="item.objectFit || 'cover'"
-					>
-						<!-- 左上返回 -->
-						<cover-view class="sv-back" @click.stop="$emit('close')">
-							<cover-image class="sv-back-icon" src="/static/back.png" />
-						</cover-view>
+					></video>
 
-						<!-- 右侧交互栏 -->
-						<cover-view class="sv-interaction">
-							<!-- 用户头像 -->
-							<cover-view class="sv-item">
-								<cover-image class="sv-avatar" src="/static/ling.png" />
-							</cover-view>
-							<!-- 红心点赞 -->
-							<cover-view class="sv-item" @click.stop="toggleLike(index)">
-								<cover-image
-									class="sv-icon"
-									:src="'/static/scroll-video/' + (isLiked(index) ? 'like_active' : 'like') + '.png'"
-								/>
-								<cover-view class="sv-total">{{ item.likeCount || '赞' }}</cover-view>
-							</cover-view>
-							<!-- 评论（仅展示） -->
-							<cover-view class="sv-item">
-								<cover-image class="sv-icon" src="/static/scroll-video/chat.png" />
-								<cover-view class="sv-total">{{ item.commentCount || '评论' }}</cover-view>
-							</cover-view>
-							<!-- 收藏（仅展示） -->
-							<cover-view class="sv-item">
-								<cover-image
-									class="sv-icon"
-									:src="'/static/scroll-video/' + (item.collectActive ? 'star_active' : 'star') + '.png'"
-								/>
-								<cover-view class="sv-total">{{ item.collectCount || '收藏' }}</cover-view>
-							</cover-view>
-						</cover-view>
-					</video>
+					<!-- 透明触摸层：拦截原生 video 吞掉的手势，手动检测上下滑动切换视频 -->
+					<view
+						class="sv-touch-layer"
+						@touchstart="onTouchStart"
+						@touchmove="onTouchMove"
+						@touchend="onTouchEnd($event, index)"
+					></view>
+
+					<!-- 左上返回 -->
+					<view class="sv-back" @click.stop="$emit('close')">
+						<image class="sv-back-icon" src="/static/back.png" />
+					</view>
+
+					<!-- 右侧交互栏 -->
+					<view class="sv-interaction">
+						<!-- 用户头像 -->
+						<view class="sv-item">
+							<image class="sv-avatar" src="/static/ling.png" />
+						</view>
+						<!-- 红心点赞 -->
+						<view class="sv-item" @click.stop="toggleLike(index)">
+							<image
+								class="sv-icon"
+								:src="'/static/scroll-video/' + (isLiked(index) ? 'like_active' : 'like') + '.png'"
+							/>
+							<text class="sv-total">{{ item.likeCount || '赞' }}</text>
+						</view>
+						<!-- 评论（仅展示） -->
+						<view class="sv-item">
+							<image class="sv-icon" src="/static/scroll-video/chat.png" />
+							<text class="sv-total">{{ item.commentCount || '评论' }}</text>
+						</view>
+						<!-- 收藏（仅展示） -->
+						<view class="sv-item">
+							<image
+								class="sv-icon"
+								:src="'/static/scroll-video/' + (item.collectActive ? 'star_active' : 'star') + '.png'"
+							/>
+							<text class="sv-total">{{ item.collectCount || '收藏' }}</text>
+						</view>
+					</view>
 				</view>
 			</swiper-item>
 		</swiper>
@@ -77,6 +88,11 @@ export default {
 		return {
 			currentIndex: this.initialIndex,
 			localLikes: {},
+			touchStartX: 0,
+			touchStartY: 0,
+			touchStartTime: 0,
+			touchMoved: false,
+			isPaused: false,
 		};
 	},
 	watch: {
@@ -118,17 +134,71 @@ export default {
 			this.$emit('clickEventListener', { type: 'like', index, active: newState });
 		},
 		onSwiperChange(e) {
-			const prevIndex = this.currentIndex;
 			const nextIndex = Number(e.detail.current);
-			if (Number.isNaN(nextIndex) || nextIndex === prevIndex) return;
+			if (Number.isNaN(nextIndex)) return;
+			this.switchToVideo(nextIndex);
+		},
+		// 统一的视频切换逻辑：更新索引、暂停上一个、播放当前
+		switchToVideo(index) {
+			if (index < 0 || index >= this.videoList.length) return;
+			if (index === this.currentIndex) return;
 
-			this.currentIndex = nextIndex;
-			this.$emit('scrollVideoChange', nextIndex);
+			const prevIndex = this.currentIndex;
+			this.currentIndex = index;
+			this.isPaused = false;
+			this.$emit('scrollVideoChange', index);
 
 			this.stopVideo(prevIndex);
 			this.$nextTick(() => {
 				this.playCurrent();
 			});
+		},
+		// ===== 透明触摸层：手动检测上下滑动手势 =====
+		onTouchStart(e) {
+			const touch = e.touches[0];
+			this.touchStartX = touch.clientX;
+			this.touchStartY = touch.clientY;
+			this.touchStartTime = Date.now();
+			this.touchMoved = false;
+		},
+		onTouchMove(e) {
+			const touch = e.touches[0];
+			const dx = touch.clientX - this.touchStartX;
+			const dy = touch.clientY - this.touchStartY;
+			if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+				this.touchMoved = true;
+			}
+		},
+		onTouchEnd(e, index) {
+			const touch = e.changedTouches[0];
+			const dx = touch.clientX - this.touchStartX;
+			const dy = touch.clientY - this.touchStartY;
+
+			// 垂直滑动且距离足够 → 切换视频
+			if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
+				if (dy < 0) {
+					this.switchToVideo(this.currentIndex + 1);
+				} else {
+					this.switchToVideo(this.currentIndex - 1);
+				}
+				return;
+			}
+
+			// 几乎没有移动 → 视为点击，切换播放/暂停
+			if (!this.touchMoved && Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+				this.togglePlay(index);
+			}
+		},
+		togglePlay(index) {
+			const ctx = uni.createVideoContext('sv-video-' + index, this);
+			if (!ctx) return;
+			if (this.isPaused) {
+				ctx.play();
+				this.isPaused = false;
+			} else {
+				ctx.pause();
+				this.isPaused = true;
+			}
 		},
 		playCurrent() {
 			this.$nextTick(() => {
@@ -178,6 +248,14 @@ export default {
 	height: 100%;
 }
 
+/* 透明触摸层：覆盖在视频上方拦截手势，位于交互按钮下方 */
+.sv-touch-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	background-color: transparent;
+}
+
 /* 左上返回 */
 .sv-back {
 	position: absolute;
@@ -199,7 +277,7 @@ export default {
 .sv-interaction {
 	position: absolute;
 	right: 16rpx;
-	bottom: 80rpx;
+	bottom: 200rpx;
 	width: 100rpx;
 	display: flex;
 	flex-direction: column;
@@ -210,6 +288,10 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	margin-bottom: 44rpx;
+}
+.sv-item:last-child {
+	margin-bottom: 0;
 }
 .sv-icon {
 	width: 70rpx;

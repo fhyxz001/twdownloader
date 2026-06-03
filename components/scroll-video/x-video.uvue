@@ -16,6 +16,8 @@
 			:show-center-play-btn="false"
 			:show-loading="false"
 			:enable-progress-gesture="false"
+			:vslide-gesture="false"
+			:vslide-gesture-in-fullscreen="false"
 			:object-fit="objectFit"
 			:http-cache="true"
 			:play-strategy="0"
