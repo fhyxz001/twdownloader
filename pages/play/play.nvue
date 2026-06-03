@@ -1,22 +1,23 @@
 <template>
 	<view class="wrap" :style="screenStyle">
-		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" @change="onChange">
+		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" :duration="250" :circular="false" @change="onChange">
 			<swiper-item v-for="(item, idx) in videoList" :key="idx">
 				<view class="slide" :style="screenStyle">
 					<video
-						:id="'pv-' + idx"
-						class="video"
-						:style="videoStyle"
-						:src="isNear(idx) ? item.src : ''"
-						:poster="item.poster || ''"
-						:autoplay="idx === current"
-						:loop="true"
-						:controls="true"
-						:show-fullscreen-btn="false"
-						:show-center-play-btn="true"
-						:enable-progress-gesture="false"
-						object-fit="contain"
-					></video>
+					:id="'pv-' + idx"
+					class="video"
+					:style="videoStyle"
+					:src="isNear(idx) ? item.src : ''"
+					:poster="item.poster || ''"
+					:autoplay="idx === current"
+					:loop="true"
+					:controls="true"
+					:show-fullscreen-btn="false"
+					:show-center-play-btn="true"
+					:enable-progress-gesture="false"
+					object-fit="contain"
+					@play="onVideoPlay(idx)"
+				></video>
 
 					<!-- 左上返回 -->
 					<view class="back" :style="{ top: backTop + 'px' }" @click="goBack">
@@ -64,6 +65,7 @@
 				statusBarHeight: 20,
 				videoPad: 24,
 				channel: null,
+				preloadedSet: {},
 			};
 		},
 		computed: {
@@ -103,6 +105,28 @@
 		methods: {
 			isNear(idx) {
 				return idx >= this.current - 1 && idx <= this.current + 1;
+			},
+			onVideoPlay(idx) {
+				// 当前视频开始播放后，预缓冲下一条视频
+				if (idx === this.current) {
+					this.$nextTick(() => {
+						this.preloadVideo(this.current + 1);
+						this.preloadVideo(this.current - 1);
+					});
+				}
+			},
+			preloadVideo(index) {
+				if (index < 0 || index >= this.videoList.length) return;
+				if (this.preloadedSet[index]) return;
+				this.preloadedSet[index] = true;
+				const ctx = uni.createVideoContext('pv-' + index, this);
+				if (ctx) {
+					// 短暂播放后立即暂停，触发缓冲加载
+					ctx.play();
+					setTimeout(() => {
+						ctx.pause();
+					}, 300);
+				}
 			},
 			onChange(e) {
 				const next = Number(e.detail.current);
