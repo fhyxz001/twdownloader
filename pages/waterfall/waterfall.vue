@@ -9,9 +9,6 @@
 						<view class="nav-btn" @tap="goToFiles">
 							<image class="nav-btn-icon" src="/static/list.png" mode="aspectFit" />
 						</view>
-						<view class="nav-btn" @tap="goToFavorites">
-							<image class="nav-btn-icon" src="/static/love.png" mode="aspectFit" />
-						</view>
 						<view class="nav-btn" @tap="showSettings = true">
 							<image class="nav-btn-icon" src="/static/set.png" mode="aspectFit" />
 						</view>
@@ -234,7 +231,6 @@
 </template>
 
 <script>
-import { getFavoriteIds } from '@/utils/db.js';
 
 	const MEDIA_API_URL = 'https://truvaze.com/api/media';
 
@@ -305,7 +301,6 @@ import { getFavoriteIds } from '@/utils/db.js';
 				refreshing: false,
 				loadError: '',
 				showSettings: false,
-				favoriteIds: new Set(),
 				downloading: false,
 				downloadProgress: '',
 				config: {
@@ -384,30 +379,15 @@ import { getFavoriteIds } from '@/utils/db.js';
 					userAvatar: null,
 					userName: item.title || item.id,
 					userFollow: null,
-					likeActive: this.favoriteIds.has(item.id),
-					likeCount: item.favorite ? this.formatCount(item.favorite) : null,
-					commentCount: null,
-					collectActive: false,
-					collectCount: null,
-					fav: {
-						id: item.id,
-						title: item.title || item.id,
-						url: item.url,
-						thumbnail: item.thumbnail || '',
-						source: 'waterfall',
-						extra: { duration: item.duration, favorite: item.favorite, pv: item.pv },
-					},
 				}));
 			},
 		},
 		onLoad() {
 			this.restoreConfig();
 			this.tabs = [{ code: '', name: '全部' }, ...ALL_TAGS.map(t => ({ code: t.code, name: t.name }))];
-			this.loadFavoriteIds();
 			this.loadData();
 		},
 		onShow() {
-			this.loadFavoriteIds();
 		},
 		onBackPress() {
 			if (this.showSettings) {
@@ -419,15 +399,6 @@ import { getFavoriteIds } from '@/utils/db.js';
 		methods: {
 			goToFiles() {
 				uni.navigateTo({ url: '/pages/files/files' });
-			},
-			goToFavorites() {
-				uni.navigateTo({ url: '/pages/favorites/favorites' });
-			},
-			async loadFavoriteIds() {
-				try {
-					const ids = await getFavoriteIds();
-					this.favoriteIds = ids;
-				} catch (e) {}
 			},
 			formatDuration(seconds) {
 				const s = Number(seconds);
@@ -598,21 +569,8 @@ import { getFavoriteIds } from '@/utils/db.js';
 					url: '/pages/play/play',
 					success: (res) => {
 						res.eventChannel.emit('initData', { list, index });
-						res.eventChannel.on('toggleLike', (payload) => {
-							this.onVideoClick({ type: 'like', index: payload.index, active: payload.active });
-						});
 					},
 				});
-			},
-			onVideoClick(e) {
-				if (e.type === 'like') {
-					const item = this.items[e.index];
-					if (!item) return;
-					if (e.active) this.favoriteIds.add(item.id);
-					else this.favoriteIds.delete(item.id);
-					this.favoriteIds = new Set(this.favoriteIds);
-				}
-				// 评论、收藏目前只是摆设
 			},
 
 			async downloadSelected() {

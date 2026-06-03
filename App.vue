@@ -1,10 +1,7 @@
 <script>
-	import { initDatabase } from '@/utils/db.js';
-
 	export default {
 		onLaunch: function() {
 			console.log('App Launch');
-			initDatabase();
 		},
 		onShow: function() {
 			console.log('App Show')
@@ -16,7 +13,7 @@
 </script>
 
 <style>
-	/* 全局样式 */
+	/* 鍏ㄥ眬鏍峰紡 */
 	page {
 		background-color: #f4f1ea;
 		font-family: -apple-system, "Microsoft YaHei", "Segoe UI", sans-serif;

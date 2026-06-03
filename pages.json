@@ -21,13 +21,6 @@
 			}
 		},
 		{
-			"path": "pages/favorites/favorites",
-			"style": {
-				"navigationBarTitleText": "我喜欢的",
-				"navigationStyle": "custom"
-			}
-		},
-		{
 			"path": "pages/play/play",
 			"style": {
 				"navigationBarTitleText": "播放",

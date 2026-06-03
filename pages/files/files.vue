@@ -99,7 +99,6 @@
 </template>
 
 <script>
-	import { getFavoriteIds } from '@/utils/db.js';
 
 	const DELETE_BTN_WIDTH = 160; // rpx
 
@@ -109,7 +108,6 @@
 				files: [],
 				isEditMode: false,
 				selectedIds: new Set(),
-				favoriteIds: new Set(),
 				swipeOffset: {},
 				touchStartX: 0,
 				touchStartY: 0,
@@ -132,25 +130,11 @@
 					userAvatar: null,
 					userName: null,
 					userFollow: null,
-					likeActive: this.favoriteIds.has(f.id),
-					likeCount: null,
-					commentCount: null,
-					collectActive: false,
-					collectCount: null,
-						fav: {
-							id: f.id,
-							title: f.title || f.id,
-							url: f.url,
-							thumbnail: f.thumbnail || '',
-							source: 'files',
-							extra: { filePath: f.filePath, downloadedAt: f.downloadedAt },
-						},
 				}));
 			},
 		},
 		onShow() {
 			this.loadFiles();
-			this.syncFavoriteIds();
 		},
 		methods: {
 			loadFiles() {
@@ -159,11 +143,6 @@
 				} catch (e) {
 					this.files = [];
 				}
-			},
-			async syncFavoriteIds() {
-				try {
-					this.favoriteIds = await getFavoriteIds();
-				} catch (e) {}
 			},
 			formatDate(timestamp) {
 				if (!timestamp) return '';
@@ -297,20 +276,8 @@
 					url: '/pages/play/play',
 					success: (res) => {
 						res.eventChannel.emit('initData', { list, index });
-						res.eventChannel.on('toggleLike', (payload) => {
-							this.onVideoClick({ type: 'like', index: payload.index, active: payload.active });
-						});
 					},
 				});
-			},
-			onVideoClick(e) {
-				if (e.type === 'like') {
-					const file = this.files[e.index];
-					if (!file) return;
-					if (e.active) this.favoriteIds.add(file.id);
-					else this.favoriteIds.delete(file.id);
-					this.favoriteIds = new Set(this.favoriteIds);
-				}
 			},
 			deleteOne(index) {
 				this.closeSwipe(index);

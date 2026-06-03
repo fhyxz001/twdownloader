@@ -1,6 +1,6 @@
 <template>
 	<view class="wrap" :style="screenStyle">
-		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" :duration="250" :circular="false" @change="onChange">
+		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" :duration="200" :circular="false" @change="onChange">
 			<swiper-item v-for="(item, idx) in videoList" :key="idx">
 				<view class="slide" :style="screenStyle">
 					<video
@@ -25,27 +25,25 @@
 					</view>
 
 					<!-- 右侧交互栏 -->
-					<view class="bar">
-						<view class="item">
-							<image class="avatar" src="/static/ling.jpg"></image>
-						</view>
-						<view class="item" @click="toggleLike(idx)">
-							<image
-								class="icon"
-								:src="'/static/scroll-video/' + (item.likeActive ? 'like_active' : 'like') + '.png'"
-							></image>
-							<text class="total">{{ item.likeCount ? item.likeCount : '赞' }}</text>
-						</view>
-						<view class="item" @click="prev">
-							<text class="arrow">&#9650;</text>
-						</view>
-						<view class="item" @click="next">
-							<text class="arrow">&#9660;</text>
-						</view>
-						<view class="item" @click="toggleLandscape">
-							<image class="icon" src="/static/h.png"></image>
-						</view>
+				<view class="bar">
+					<view class="item" @click="prev">
+						<text class="arrow">&#9650;</text>
 					</view>
+					<view class="item" @click="next">
+						<text class="arrow">&#9660;</text>
+					</view>
+					<view class="item" @click="toggleLandscape">
+						<image class="icon" src="/static/h.png"></image>
+					</view>
+				</view>
+
+					<!-- 手势遮罩：拦截滑动，提高灵敏度 -->
+					<view
+						class="touch-mask"
+						@touchstart="onTouchStart"
+						@touchmove.stop.prevent="onTouchMove"
+						@touchend="onTouchEnd"
+					></view>
 				</view>
 			</swiper-item>
 		</swiper>
@@ -53,8 +51,6 @@
 </template>
 
 <script>
-	import { addFavorite, removeFavorite } from '@/utils/db.js';
-
 	export default {
 		data() {
 			return {
@@ -66,6 +62,9 @@
 				videoPad: 24,
 				channel: null,
 				preloadedSet: {},
+				swipeStartY: 0,
+				swipeStartX: 0,
+				swipeTriggered: false,
 			};
 		},
 		computed: {
@@ -103,6 +102,30 @@
 			this.pause(this.current);
 		},
 		methods: {
+			onTouchStart(e) {
+				const touch = e.touches[0];
+				this.swipeStartY = touch.clientY;
+				this.swipeStartX = touch.clientX;
+				this.swipeTriggered = false;
+			},
+			onTouchMove(e) {
+				if (this.swipeTriggered) return;
+				const touch = e.touches[0];
+				const deltaY = touch.clientY - this.swipeStartY;
+				const deltaX = touch.clientX - this.swipeStartX;
+				// 垂直滑动为主，且超过阈值 30px 即触发切换
+				if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 30) {
+					this.swipeTriggered = true;
+					if (deltaY < 0) {
+						this.next();
+					} else {
+						this.prev();
+					}
+				}
+			},
+			onTouchEnd() {
+				this.swipeTriggered = false;
+			},
 			isNear(idx) {
 				return idx >= this.current - 1 && idx <= this.current + 1;
 			},
@@ -159,20 +182,6 @@
 			toggleLandscape() {
 				const ctx = uni.createVideoContext('pv-' + this.current, this);
 				if (ctx) ctx.requestFullScreen({ direction: 90 });
-			},
-			toggleLike(index) {
-				const item = this.videoList[index];
-				if (!item) return;
-				const active = !item.likeActive;
-				this.videoList.splice(index, 1, Object.assign({}, item, { likeActive: active }));
-				if (item.fav && item.fav.id) {
-					if (active) {
-						addFavorite(item.fav);
-					} else {
-						removeFavorite(item.fav.id);
-					}
-				}
-				if (this.channel) this.channel.emit('toggleLike', { index, active });
 			},
 			goBack() {
 				uni.navigateBack({ delta: 1 });
@@ -246,5 +255,12 @@
 		color: #ffffff;
 		font-weight: bold;
 		text-align: center;
+	}
+	.touch-mask {
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
 	}
 </style>
