@@ -19,6 +19,13 @@
 				"navigationBarTitleText": "本地文件",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/favorites/favorites",
+			"style": {
+				"navigationBarTitleText": "我喜欢的",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {

@@ -18,7 +18,8 @@
         },
         /* 模块配置 */
         "modules" : {
-            "VideoPlayer" : {}
+            "VideoPlayer" : {},
+            "SQLite" : {}
         },
         /* 应用发布信息 */
         "distribute" : {

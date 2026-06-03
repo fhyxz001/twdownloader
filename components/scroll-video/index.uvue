@@ -1,0 +1,263 @@
+<script lang="uts">
+	import { type PropType} from 'vue'
+	import type { ComponentPublicInstance } from 'vue'
+	import XVideo from './x-video.uvue'
+	import xSlider from './x-slider.uvue'
+
+	export type videoDataType = {
+		// video
+		src : string,
+		description : string;
+		poster?: string,
+		objectFit?: string,
+		// 用户相关
+		userAvatar : string | null,
+		userName : string | null,
+		userFollow : boolean | null,
+		// click
+		likeActive ?: boolean | null,
+		likeCount ?: string | null,
+		commentCount ?: string | null,
+		collectActive ?: boolean | null,
+		collectCount ?: string | null,
+	}
+	export type clickEventListenerType = {
+		type : string,
+		index : number
+	}
+	export default {
+		components: { XVideo, xSlider },
+		emits: ['clickEventListener', 'scrollVideoChang'],
+		props: {
+			width: {
+				type: Number,
+				default: uni.getSystemInfoSync().windowWidth,
+				required: false
+			},
+			height: {
+				type: Number,
+				default: uni.getSystemInfoSync().windowHeight,
+				required: false
+			},
+			initialIndex: {
+				type: Number,
+				default: 0,
+				required: false
+			},
+			videoList: {
+				type: Array as PropType<Array<videoDataType>>,
+				required: false,
+				default: () : videoDataType[] => []
+			}
+		},
+		data() {
+			return {
+				current: this.initialIndex,
+				timer: 0,
+				sliderTouchType: false
+			}
+		},
+		watch: {
+			initialIndex(value : number) {
+				this.current = value < 0 ? 0 : value
+			}
+		},
+		computed: {
+			fullScreen() : string {
+				return `width:${this.width}px;height:${this.height}px`
+			},
+		},
+		mounted() {
+			this.play()
+		},
+		methods: {
+			swiperChange: function (res : SwiperChangeEvent) {
+				clearTimeout(this.timer);
+				this.timer = setTimeout(() => {
+					let context = (this.$refs["XVideo"]! as ComponentPublicInstance[])
+					context[this.current].$callMethod('setStarting', false);
+					context[this.current].$callMethod('_stop', () => {
+						context[res.detail.current].$callMethod('play');
+						this.current = res.detail.current
+						this.$emit('scrollVideoChang', res.detail.current)
+					});
+					context[this.current].$callMethod('seek', 0);
+				}, 500)
+			},
+			_clickEventSend(e : Event) {
+				e.preventDefault()
+				e.stopPropagation()
+			},
+			clickEventSend(type : string, index : number) {
+				this.$emit('clickEventListener', {
+					type,
+					index
+				} as clickEventListenerType)
+			},
+			play() {
+				let context = (this.$refs["XVideo"]! as ComponentPublicInstance[])
+				setTimeout(() => {
+					context[this.current].$callMethod('play');	
+				}, 300)
+			},
+			pause() {
+				let context = (this.$refs["XVideo"]! as ComponentPublicInstance[])
+				context[this.current].$callMethod('pause');
+			}
+		}
+	}
+</script>
+<template>
+	<!-- #ifdef APP -->
+	<view class="swiper_wrap" :style="fullScreen">
+		<swiper :style="fullScreen" :vertical="true" :current="current" @change="swiperChange">
+			<swiper-item v-for="(item, index) in videoList" :key="index" :item-id="index">
+				<view style="position: relative;" :style="fullScreen">
+					<x-video
+						ref="XVideo"
+						:key="'XVideo' + index"
+						:fullScreen="fullScreen" 
+						:index="index" 
+						:src="item.src" 
+						:poster="item.poster"
+						:objectFit="item.objectFit"
+						:autoplay="index == current"
+						v-model:slider-touch-type="sliderTouchType"
+					>
+						<template v-slot>
+							<text class="name" :class="{
+								on: sliderTouchType
+							}" @click="clickEventSend('userName', index)">{{ item.userName }}</text>
+							<text class="desc" :class="{
+								on: sliderTouchType
+							}" @click="clickEventSend('description', index)">{{ item.description }}</text>
+						</template> 
+					</x-video>
+							<view class="interaction" :class="{
+								on: sliderTouchType
+							}">
+								<view class="item">
+									<image class="user_avatar" @click="clickEventSend('userAvatar', index)"
+										:src="item.userAvatar == null ? '../../static/scroll-video/default_avatar.png' : item.userAvatar" :mode="'aspectFill'"></image>
+									<button v-if="item.userFollow == null || item.userFollow == false" class="follow" size="mini" type="primary" @click="clickEventSend('userFollow', index)">关注</button>
+								</view>
+								<view class="item" @click="clickEventSend('like', index)">
+									<image class="icon"
+										:src="'../../static/scroll-video/' + (item.likeActive == null || item.likeActive  == false  ? 'like' :'like_active') +'.png'"
+										:mode="'widthFix'"></image>
+									<text class="total">{{item.likeCount == null ? '赞' : item.likeCount}}</text>
+								</view>
+								<view class="item" @click="clickEventSend('comment', index)">
+									<image class="icon" src="../../static/scroll-video/chat.png" :mode="'widthFix'"></image>
+									<text class="total">{{item.commentCount == null ? '评论' : item.commentCount}}</text>
+								</view>
+								<view class="item" @click="clickEventSend('collect', index)">
+									<image class="icon"
+										:src="'../../static/scroll-video/' + (item.collectActive == null || item.collectActive  == false  ? 'star' :'star_active') +'.png'"
+										:mode="'widthFix'"></image>
+									<text class="total">{{item.collectCount == null ? '收藏' : item.collectCount}}</text>
+								</view>
+							</view>
+					
+				</view>
+			</swiper-item>
+		</swiper>
+	</view>
+<!-- #ifdef APP -->
+</template>
+<style lang="scss">
+	.swiper_wrap {
+		position: relative;
+	}
+
+	.info {
+		position: absolute;
+		left: 0;
+		bottom: 30rpx;
+		padding-left: 30rpx;
+		padding-right: 150rpx;
+		transition-duration: 200;
+		transition-property: opacity;
+		&.on{
+			opacity: 0;
+		}
+		.name {
+			color: white;
+			font-size: 36rpx;
+			font-weight: bold;
+		}
+
+	}
+	.name{
+		position: absolute;
+		color: white;
+		font-size: 36rpx;
+		font-weight: bold;
+		left: 15px;
+		bottom: 145rpx;
+		&.on{
+			opacity: 0;
+		}
+	}
+	.desc {
+		position: absolute;
+		left: 15px;
+		bottom: 45rpx;
+		opacity: 0.8;
+		color: white;
+		font-size: 30rpx;
+		line-height: 1.3;
+		width: 60%;
+		z-index: 1;
+		&.on{
+			opacity: 0;
+		}
+	}
+
+
+	.interaction {
+		position: absolute;
+		right: 10rpx;
+		bottom: 65rpx;
+		width: 100rpx;
+		align-items: center;
+		transition-duration: 200;
+		transition-property: opacity;
+		&.on{
+			opacity: 0;
+		}
+		.item {
+			position: relative;
+			margin: 22rpx 0;
+			align-items: center;
+			justify-content: center;
+
+			.icon {
+				width: 66rpx;
+			}
+
+			.total {
+				margin-top: 8rpx;
+				font-size: 24rpx;
+				color: white;
+				font-weight: bold;
+			}
+		}
+
+		.user_avatar {
+			width: 90rpx;
+			height: 90rpx;
+			border: 8rpx solid white;
+			border-radius: 50;
+			margin-bottom: 10rpx;
+			// box-shadow: 30px 50px 20px #fffff;
+		}
+	}
+		.follow{
+			position: absolute;
+			bottom: 0;
+			font-size: 12rpx;
+			width: 110rpx;
+			transform: scale(0.7, 0.8);
+		}
+</style>

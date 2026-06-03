@@ -7,7 +7,10 @@
 					<text class="nav-large-title">探索</text>
 					<view class="nav-actions">
 						<view class="nav-btn" @tap="goToFiles">
-							<text class="nav-btn-folder">&#128193;</text>
+							<image class="nav-btn-icon" src="/static/list.png" mode="aspectFit" />
+						</view>
+						<view class="nav-btn" @tap="goToFavorites">
+							<image class="nav-btn-icon" src="/static/love.png" mode="aspectFit" />
 						</view>
 						<view class="nav-btn" @tap="showSettings = true">
 							<image class="nav-btn-icon" src="/static/set.png" mode="aspectFit" />
@@ -225,31 +228,26 @@
 				<view class="sheet-footer">
 					<text class="sheet-btn-primary" @tap="saveSettings">完成</text>
 				</view>
-	
 			</view>
 		</view>
 
-		<!-- 视频预览弹窗 -->
-		<view class="preview-mask" :class="{ 'preview-mask-visible': showPreview }" @tap="closePreview">
-			<view class="preview-container" :class="{ 'preview-container-visible': showPreview }" @tap.stop>
-				<view class="preview-bar">
-					<text class="preview-title">{{ previewItem?.title || '视频预览' }}</text>
-					<text class="preview-close" @tap="closePreview">&#10005;</text>
-				</view>
-				<video
-					v-if="showPreview && previewItem"
-					class="preview-video"
-					:src="previewItem.url"
-					:poster="previewItem.thumbnail"
-					controls
-					autoplay
-				/>
-			</view>
-		</view>
+		<!-- 视频播放 - scroll-video 组件 -->
+		<scroll-video
+			v-if="showPreview"
+			ref="scrollVideo"
+			:videoList="previewVideoList"
+			:initialIndex="previewIndex"
+			@close="closePreview"
+			@clickEventListener="onVideoClick"
+			@scrollVideoChange="onVideoChange"
+		/>
 	</view>
 </template>
 
 <script>
+	import ScrollVideo from '@/components/scroll-video/scroll-video.vue';
+import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
+
 	const MEDIA_API_URL = 'https://truvaze.com/api/media';
 
 	const ALL_TAGS = [
@@ -306,6 +304,7 @@
 	];
 
 	export default {
+		components: { ScrollVideo },
 		data() {
 			return {
 				tabs: [{ code: '', name: '全部' }],
@@ -320,7 +319,9 @@
 				loadError: '',
 				showSettings: false,
 				showPreview: false,
+				previewIndex: 0,
 				previewItem: null,
+				favoriteIds: new Set(),
 				downloading: false,
 				downloadProgress: '',
 				config: {
@@ -390,15 +391,55 @@
 			perPageIndex() {
 				return this.perPageOptions.indexOf(this.settingsForm.perPage);
 			},
+			previewVideoList() {
+				return this.items.map(item => ({
+					src: item.url,
+					description: item.title || item.id,
+					poster: item.thumbnail || '',
+					objectFit: 'cover',
+					userAvatar: null,
+					userName: item.title || item.id,
+					userFollow: null,
+					likeActive: this.favoriteIds.has(item.id),
+					likeCount: item.favorite ? this.formatCount(item.favorite) : null,
+					commentCount: null,
+					collectActive: false,
+					collectCount: null,
+				}));
+			},
 		},
 		onLoad() {
 			this.restoreConfig();
 			this.tabs = [{ code: '', name: '全部' }, ...ALL_TAGS.map(t => ({ code: t.code, name: t.name }))];
+			this.loadFavoriteIds();
 			this.loadData();
+		},
+		onShow() {
+			this.loadFavoriteIds();
+		},
+		onBackPress() {
+			if (this.showPreview) {
+				this.closePreview();
+				return true;
+			}
+			if (this.showSettings) {
+				this.showSettings = false;
+				return true;
+			}
+			return false;
 		},
 		methods: {
 			goToFiles() {
 				uni.navigateTo({ url: '/pages/files/files' });
+			},
+			goToFavorites() {
+				uni.navigateTo({ url: '/pages/favorites/favorites' });
+			},
+			async loadFavoriteIds() {
+				try {
+					const ids = await getFavoriteIds();
+					this.favoriteIds = ids;
+				} catch (e) {}
 			},
 			formatDuration(seconds) {
 				const s = Number(seconds);
@@ -559,12 +600,45 @@
 			},
 
 			onCardTap(item) {
-				this.previewItem = item;
+				const index = this.items.findIndex(candidate => candidate.id === item.id);
+				this.openPreview(index >= 0 ? index : 0);
+			},
+			openPreview(index) {
+				if (!this.items.length) return;
+				this.previewIndex = index;
+				this.previewItem = this.items[index] || null;
 				this.showPreview = true;
 			},
 			closePreview() {
 				this.showPreview = false;
 				this.previewItem = null;
+				this.previewIndex = 0;
+			},
+			onVideoChange(index) {
+				this.previewIndex = index;
+				this.previewItem = this.items[index] || null;
+			},
+			onVideoClick(e) {
+				if (e.type === 'like') {
+					const item = this.items[e.index];
+					if (!item) return;
+					if (e.active) {
+						addFavorite({
+							id: item.id,
+							title: item.title || item.id,
+							url: item.url,
+							thumbnail: item.thumbnail || '',
+							source: 'waterfall',
+							extra: { duration: item.duration, favorite: item.favorite, pv: item.pv },
+						});
+						this.favoriteIds.add(item.id);
+					} else {
+						removeFavorite(item.id);
+						this.favoriteIds.delete(item.id);
+					}
+					this.favoriteIds = new Set(this.favoriteIds);
+				}
+				// 评论、收藏目前只是摆设
 			},
 
 			async downloadSelected() {
@@ -708,9 +782,6 @@
 	.nav-btn-icon {
 		width: 44rpx;
 		height: 44rpx;
-	}
-	.nav-btn-folder {
-		font-size: 38rpx;
 	}
 	.nav-large-title {
 		font-size: 68rpx;
@@ -1121,66 +1192,5 @@
 		padding: 24rpx 0;
 		border-radius: 20rpx;
 		background-color: #007AFF;
-	}
-
-	/* ===== 视频预览弹窗 ===== */
-	.preview-mask {
-		position: fixed;
-		inset: 0;
-		background-color: rgba(0, 0, 0, 0);
-		z-index: 200;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background-color 0.3s ease;
-		pointer-events: none;
-	}
-	.preview-mask-visible {
-		background-color: rgba(0, 0, 0, 0.85);
-		pointer-events: auto;
-	}
-	.preview-container {
-		width: 92%;
-		border-radius: 24rpx;
-		background-color: #1C1C1E;
-		overflow: hidden;
-		transform: scale(0.85);
-		opacity: 0;
-		transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-	}
-	.preview-container-visible {
-		transform: scale(1);
-		opacity: 1;
-	}
-	.preview-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 24rpx 28rpx;
-	}
-	.preview-title {
-		font-size: 28rpx;
-		font-weight: 600;
-		color: #fff;
-		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		margin-right: 20rpx;
-	}
-	.preview-close {
-		width: 52rpx;
-		height: 52rpx;
-		border-radius: 50%;
-		background-color: rgba(255, 255, 255, 0.15);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 24rpx;
-		color: #fff;
-	}
-	.preview-video {
-		width: 100%;
-		max-height: 70vh;
 	}
 </style>

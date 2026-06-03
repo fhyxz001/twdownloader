@@ -1,0 +1,152 @@
+<template>
+	<view class="x_slider_box" :style="'width:' + width +'px;'"  @touchstart="onTouchStart"
+		@touchmove="onTouchMove" @touchend="onTouchEnd" @touchcancel="onTouchEnd">
+		<view class="x_slider" 
+			:style="s"
+		>
+			<view class="x_slider_v" 
+			:style="(touchType ? 'background-color: rgba(255, 255, 255, 1);' : '')+'width: ' + w.toFixed(2)  + 'px;'"></view>
+		</view>
+	</view>
+</template>
+
+<script>
+	type obj = {
+		start : Number,
+		move : Number,
+		end : Number
+	}
+	export default {
+		emits: ['changEnd','change', 'changing', '@update:value'],
+		props: {
+			min: {
+				type: Number,
+				default: 0
+			},
+			max: {
+				type: Number,
+				default: 0
+			},
+			step: {
+				type: Number,
+				default: 1
+			},
+			value: {
+				type: Number,
+				default: 0
+			},
+			// duration: {
+			// 	type: Number,
+			// 	default: 0
+			// },
+			width: {
+				type: Number,
+				default: uni.getSystemInfoSync().windowWidth - 30
+			},
+			height: {
+				type: Number,
+				default: 3
+			},
+			activeColor: {
+				type: Number,
+				default: 0
+			},
+		},
+		data() {
+			return {
+				x: {
+					start: 0,
+					move: 0,
+					end: 0,
+				} as obj,
+				v: 0,
+				touchType: false
+				// w: 0,
+
+			}
+		},
+		computed: {
+			s(): string {
+				let h = 'height:' + (!this.touchType ? this.height : this.height * 10) +'rpx;'
+				return h
+				// touchType/
+			},
+			w() : number {
+				let v = this.value
+				if (this.max == 0) {
+					return 0
+				}
+				if (this.x.start != 0) {
+					v = this.v
+				}
+				return v * (this.width / this.max)
+			}
+		},
+		methods: {
+			onTouchStart(e : TouchEvent) {
+				e.stopPropagation()
+				this.v = this.value
+				this.x.start = e.touches[0].pageX.toInt()
+			},
+			onTouchMove(e : TouchEvent) {
+				e.preventDefault()
+				e.stopPropagation()
+				this.touchType = true
+				// 当前的进度条
+				let _w = this.v * (this.width / this.max);
+				let _g = e.touches[0].pageX.toInt() - this.x.start
+				let current = (_g / this.width) * this.max;
+				let v = Math.round(current / this.step) + this.value;
+				if (v <= this.min) {
+					v = this.min
+				} else if (v >= this.max) {
+					v = this.max
+				}
+				this.v = v
+				this.$emit('changing', v)
+			},
+			onTouchEnd(e : TouchEvent) {
+				if (this.touchType == false) {
+					return
+				}
+				e.preventDefault()
+				e.stopPropagation()
+				this.$emit('change', this.v)
+				this.$emit('changEnd', this.v)
+				this.x.start = 0
+				this.v = 0
+				this.touchType = false
+				// this.$emit('update:value', this.v)
+			}
+			
+		}
+	}
+</script>
+
+<style lang="scss">
+	.x_slider_box {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		height: 45rpx;
+		margin-left: 15px;
+		z-index: 5;
+		// margin: 0 5rpx;
+		// width: 100%;
+		.x_slider {
+			width: 100%;
+			position: absolute;
+			left: 0;
+			bottom: 0%;
+			background-color: rgba(255, 255, 255, 0.2);
+			border-radius: 50rpx;
+			transition-duration: 300;
+			transition-property: height;
+		}
+
+		.x_slider_v {
+			height: 100%;
+			background-color: rgba(255, 255, 255, 0.4);
+		}
+	}
+</style>

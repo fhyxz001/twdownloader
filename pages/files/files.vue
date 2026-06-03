@@ -96,37 +96,36 @@
 			</view>
 		</view>
 
-		<!-- 视频播放弹窗 -->
-		<view class="player-mask" :class="{ 'player-mask-visible': showPlayer }" @tap="closePlayer">
-			<view class="player-container" :class="{ 'player-container-visible': showPlayer }" @tap.stop>
-				<view class="player-bar">
-					<text class="player-title">{{ playingFile?.title || '播放' }}</text>
-					<text class="player-close" @tap="closePlayer">&#10005;</text>
-				</view>
-				<video
-					v-if="showPlayer && playingFile"
-					class="player-video"
-					:src="playingFile.filePath || playingFile.url"
-					:poster="playingFile.thumbnail"
-					controls
-					autoplay
-				/>
-			</view>
-		</view>
+		<!-- 视频播放 - scroll-video 组件 -->
+		<scroll-video
+			v-if="showPlayer"
+			ref="scrollVideo"
+			:videoList="fileVideoList"
+			:initialIndex="playingIndex"
+			@close="closePlayer"
+			@clickEventListener="onVideoClick"
+			@scrollVideoChange="onVideoChange"
+		/>
 	</view>
 </template>
 
 <script>
+	import ScrollVideo from '@/components/scroll-video/scroll-video.vue';
+import { addFavorite, removeFavorite, getFavoriteIds } from '@/utils/db.js';
+
 	const DELETE_BTN_WIDTH = 160; // rpx
 
 	export default {
+		components: { ScrollVideo },
 		data() {
 			return {
 				files: [],
 				isEditMode: false,
 				selectedIds: new Set(),
 				showPlayer: false,
+				playingIndex: 0,
 				playingFile: null,
+				favoriteIds: new Set(),
 				swipeOffset: {},
 				touchStartX: 0,
 				touchStartY: 0,
@@ -140,9 +139,33 @@
 			isAllSelected() {
 				return this.files.length > 0 && this.files.every((_, i) => this.selectedIds.has(i));
 			},
+			fileVideoList() {
+				return this.files.map(f => ({
+					src: f.filePath || f.url,
+					description: f.title || '',
+					poster: f.thumbnail || '',
+					objectFit: 'contain',
+					userAvatar: null,
+					userName: null,
+					userFollow: null,
+					likeActive: this.favoriteIds.has(f.id),
+					likeCount: null,
+					commentCount: null,
+					collectActive: false,
+					collectCount: null,
+				}));
+			},
 		},
 		onShow() {
 			this.loadFiles();
+			this.syncFavoriteIds();
+		},
+		onBackPress() {
+			if (this.showPlayer) {
+				this.closePlayer();
+				return true;
+			}
+			return false;
 		},
 		methods: {
 			loadFiles() {
@@ -151,6 +174,11 @@
 				} catch (e) {
 					this.files = [];
 				}
+			},
+			async syncFavoriteIds() {
+				try {
+					this.favoriteIds = await getFavoriteIds();
+				} catch (e) {}
 			},
 			formatDate(timestamp) {
 				if (!timestamp) return '';
@@ -217,7 +245,6 @@
 				this.touchCurrentX = touch.clientX;
 				this.swiping = false;
 				this.swipingIndex = index;
-				// 如果点击的不是当前打开的项，先关闭
 				if (this.openIndex >= 0 && this.openIndex !== index) {
 					this.$set(this.swipeOffset, this.openIndex, 0);
 					this.openIndex = -1;
@@ -229,7 +256,6 @@
 				const deltaX = touch.clientX - this.touchStartX;
 				const deltaY = touch.clientY - this.touchStartY;
 
-				// 判断是否横向滑动
 				if (!this.swiping) {
 					if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
 						this.swiping = true;
@@ -239,12 +265,10 @@
 				}
 
 				this.touchCurrentX = touch.clientX;
-				// 将 px 转换为 rpx 偏移
 				const pxToRpx = 750 / uni.getSystemInfoSync().windowWidth;
 				const currentOffset = this.swipeOffset[index] || 0;
 				let newOffset = currentOffset + deltaX * pxToRpx;
 
-				// 只允许左滑（负值），限制范围
 				if (newOffset > 0) newOffset = 0;
 				if (newOffset < -DELETE_BTN_WIDTH * 1.2) newOffset = -DELETE_BTN_WIDTH * 1.2;
 
@@ -260,7 +284,6 @@
 				this.swipingIndex = -1;
 
 				const currentOffset = this.swipeOffset[index] || 0;
-				// 滑过一半则自动展开，否则回弹
 				if (currentOffset < -DELETE_BTN_WIDTH / 2) {
 					this.$set(this.swipeOffset, index, -DELETE_BTN_WIDTH);
 					this.openIndex = index;
@@ -283,12 +306,39 @@
 			},
 
 			playFile(index) {
+				this.playingIndex = index;
 				this.playingFile = this.files[index];
 				this.showPlayer = true;
 			},
 			closePlayer() {
 				this.showPlayer = false;
 				this.playingFile = null;
+				this.playingIndex = 0;
+			},
+			onVideoChange(index) {
+				this.playingIndex = index;
+				this.playingFile = this.files[index] || null;
+			},
+			onVideoClick(e) {
+				if (e.type === 'like') {
+					const file = this.files[e.index];
+					if (!file) return;
+					if (e.active) {
+						addFavorite({
+							id: file.id,
+							title: file.title || file.id,
+							url: file.url,
+							thumbnail: file.thumbnail || '',
+							source: 'files',
+							extra: { filePath: file.filePath, downloadedAt: file.downloadedAt },
+						});
+						this.favoriteIds.add(file.id);
+					} else {
+						removeFavorite(file.id);
+						this.favoriteIds.delete(file.id);
+					}
+					this.favoriteIds = new Set(this.favoriteIds);
+				}
 			},
 			deleteOne(index) {
 				this.closeSwipe(index);
@@ -591,66 +641,5 @@
 	}
 	.edit-delete-disabled {
 		opacity: 0.4;
-	}
-
-	/* 视频播放弹窗 */
-	.player-mask {
-		position: fixed;
-		inset: 0;
-		background-color: rgba(0, 0, 0, 0);
-		z-index: 200;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background-color 0.3s ease;
-		pointer-events: none;
-	}
-	.player-mask-visible {
-		background-color: rgba(0, 0, 0, 0.85);
-		pointer-events: auto;
-	}
-	.player-container {
-		width: 92%;
-		border-radius: 24rpx;
-		background-color: #1C1C1E;
-		overflow: hidden;
-		transform: scale(0.85);
-		opacity: 0;
-		transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-	}
-	.player-container-visible {
-		transform: scale(1);
-		opacity: 1;
-	}
-	.player-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 24rpx 28rpx;
-	}
-	.player-title {
-		font-size: 28rpx;
-		font-weight: 600;
-		color: #fff;
-		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		margin-right: 20rpx;
-	}
-	.player-close {
-		width: 52rpx;
-		height: 52rpx;
-		border-radius: 50%;
-		background-color: rgba(255, 255, 255, 0.15);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 24rpx;
-		color: #fff;
-	}
-	.player-video {
-		width: 100%;
-		max-height: 70vh;
 	}
 </style>
