@@ -1,52 +1,37 @@
 <template>
 	<view class="wrap" :style="screenStyle">
-		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" :duration="200" :circular="false" @change="onChange">
-			<swiper-item v-for="(item, idx) in videoList" :key="idx">
-				<view class="slide" :style="screenStyle">
-					<!-- 手势遮罩：放在最前面，使其层级低于其他UI元素，不阻挡按钮和进度条点击 -->
-					<view
-						class="touch-mask"
-						@touchstart="onTouchStart"
-						@touchmove.stop.prevent="onTouchMove"
-						@touchend="onTouchEnd"
-					></view>
+		<video
+			:id="'pv-0'"
+			class="video"
+			:style="videoStyle"
+			:src="videoList.length ? videoList[current].src : ''"
+			:poster="videoList.length ? (videoList[current].poster || '') : ''"
+			:autoplay="true"
+			:loop="true"
+			:controls="true"
+			:show-fullscreen-btn="false"
+			:show-center-play-btn="true"
+			:enable-progress-gesture="true"
+			object-fit="contain"
+		></video>
 
-					<video
-					:id="'pv-' + idx"
-					class="video"
-					:style="videoStyle"
-					:src="isNear(idx) ? item.src : ''"
-					:poster="item.poster || ''"
-					:autoplay="idx === current"
-					:loop="true"
-					:controls="true"
-					:show-fullscreen-btn="false"
-					:show-center-play-btn="true"
-					:enable-progress-gesture="true"
-					object-fit="contain"
-					@play="onVideoPlay(idx)"
-				></video>
+		<!-- 左上返回 -->
+		<view class="back" :style="{ top: backTop + 'px' }" @click="goBack">
+			<image class="back-icon" src="/static/back.png"></image>
+		</view>
 
-					<!-- 左上返回 -->
-					<view class="back" :style="{ top: backTop + 'px' }" @click="goBack">
-						<image class="back-icon" src="/static/back.png"></image>
-					</view>
-
-					<!-- 右侧交互栏 -->
-				<view class="bar">
-					<view class="item" @click="prev">
-						<text class="arrow">&#9650;</text>
-					</view>
-					<view class="item" @click="next">
-						<text class="arrow">&#9660;</text>
-					</view>
-					<view class="item" @click="toggleLandscape">
-						<image class="icon" src="/static/h.png"></image>
-					</view>
-				</view>
-				</view>
-			</swiper-item>
-		</swiper>
+		<!-- 左下角控制栏 -->
+		<view class="controls" :style="{ bottom: controlsBottom + 'px' }">
+			<view class="ctrl-item" @click="prev">
+				<text class="arrow">&#9650;</text>
+			</view>
+			<view class="ctrl-item" @click="next">
+				<text class="arrow">&#9660;</text>
+			</view>
+			<view class="ctrl-item" @click="toggleLandscape">
+				<image class="icon" src="/static/h.png"></image>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -59,12 +44,7 @@
 				windowWidth: 375,
 				windowHeight: 667,
 				statusBarHeight: 20,
-				videoPad: 24,
-				channel: null,
-				preloadedSet: {},
-				swipeStartY: 0,
-				swipeStartX: 0,
-				swipeTriggered: false,
+				videoPad: 0,
 			};
 		},
 		computed: {
@@ -72,16 +52,18 @@
 				return { width: this.windowWidth + 'px', height: this.windowHeight + 'px' };
 			},
 			videoStyle() {
-				const pad = this.videoPad;
 				return {
-					left: pad + 'px',
-					top: pad + 'px',
-					width: (this.windowWidth - pad * 2) + 'px',
-					height: (this.windowHeight - pad * 2) + 'px',
+					left: '0px',
+					top: '0px',
+					width: this.windowWidth + 'px',
+					height: this.windowHeight + 'px',
 				};
 			},
 			backTop() {
 				return this.statusBarHeight + 6;
+			},
+			controlsBottom() {
+				return 80;
 			},
 		},
 		onLoad() {
@@ -91,96 +73,36 @@
 			this.statusBarHeight = info.statusBarHeight || 20;
 
 			const ch = this.getOpenerEventChannel();
-			this.channel = ch;
 			ch.on('initData', (data) => {
 				this.videoList = data.list || [];
 				this.current = data.index || 0;
-				this.$nextTick(() => this.play(this.current));
 			});
 		},
 		onUnload() {
-			this.pause(this.current);
+			this.pause();
 		},
 		methods: {
-			onTouchStart(e) {
-				const touch = e.touches[0];
-				this.swipeStartY = touch.clientY;
-				this.swipeStartX = touch.clientX;
-				this.swipeTriggered = false;
+			getCtx() {
+				return uni.createVideoContext('pv-0', this);
 			},
-			onTouchMove(e) {
-				if (this.swipeTriggered) return;
-				const touch = e.touches[0];
-				const deltaY = touch.clientY - this.swipeStartY;
-				const deltaX = touch.clientX - this.swipeStartX;
-				// 垂直滑动为主，且超过阈值 30px 即触发切换
-				if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 30) {
-					this.swipeTriggered = true;
-					if (deltaY < 0) {
-						this.next();
-					} else {
-						this.prev();
-					}
-				}
-			},
-			onTouchEnd() {
-				this.swipeTriggered = false;
-			},
-			isNear(idx) {
-				return idx >= this.current - 1 && idx <= this.current + 1;
-			},
-			onVideoPlay(idx) {
-				// 当前视频开始播放后，预缓冲下一条视频
-				if (idx === this.current) {
-					this.$nextTick(() => {
-						this.preloadVideo(this.current + 1);
-						this.preloadVideo(this.current - 1);
-					});
-				}
-			},
-			preloadVideo(index) {
-				if (index < 0 || index >= this.videoList.length) return;
-				if (this.preloadedSet[index]) return;
-				this.preloadedSet[index] = true;
-				const ctx = uni.createVideoContext('pv-' + index, this);
-				if (ctx) {
-					// 短暂播放后立即暂停，触发缓冲加载
-					ctx.play();
-					setTimeout(() => {
-						ctx.pause();
-					}, 300);
-				}
-			},
-			onChange(e) {
-				const next = Number(e.detail.current);
-				if (Number.isNaN(next) || next === this.current) return;
-				this.pause(this.current);
-				this.current = next;
-				this.$nextTick(() => this.play(next));
-			},
-			play(index) {
-				const ctx = uni.createVideoContext('pv-' + index, this);
+			play() {
+				const ctx = this.getCtx();
 				if (ctx) ctx.play();
 			},
-			pause(index) {
-				const ctx = uni.createVideoContext('pv-' + index, this);
+			pause() {
+				const ctx = this.getCtx();
 				if (ctx) ctx.pause();
 			},
-			goTo(target) {
-				if (target < 0 || target >= this.videoList.length) return;
-				if (target === this.current) return;
-				this.pause(this.current);
-				this.current = target;
-				this.$nextTick(() => this.play(target));
-			},
 			prev() {
-				this.goTo(this.current - 1);
+				if (this.current <= 0) return;
+				this.current--;
 			},
 			next() {
-				this.goTo(this.current + 1);
+				if (this.current >= this.videoList.length - 1) return;
+				this.current++;
 			},
 			toggleLandscape() {
-				const ctx = uni.createVideoContext('pv-' + this.current, this);
+				const ctx = this.getCtx();
 				if (ctx) ctx.requestFullScreen({ direction: -90 });
 			},
 			goBack() {
@@ -193,11 +115,6 @@
 <style>
 	.wrap {
 		background-color: #000000;
-	}
-	.swiper {
-		flex: 1;
-	}
-	.slide {
 		position: relative;
 	}
 	.video {
@@ -217,50 +134,27 @@
 		width: 44rpx;
 		height: 44rpx;
 	}
-	.bar {
+	.controls {
 		position: absolute;
-		right: 16rpx;
-		bottom: 200rpx;
-		width: 100rpx;
+		left: 24rpx;
+		flex-direction: column;
 		align-items: center;
 	}
-	.item {
+	.ctrl-item {
+		width: 100rpx;
+		height: 100rpx;
+		justify-content: center;
 		align-items: center;
-		margin-bottom: 44rpx;
+		margin-bottom: 32rpx;
 	}
 	.icon {
-		width: 70rpx;
-		height: 70rpx;
+		width: 72rpx;
+		height: 72rpx;
 	}
 	.arrow {
-		width: 70rpx;
-		height: 70rpx;
-		font-size: 56rpx;
-		line-height: 70rpx;
+		font-size: 64rpx;
+		line-height: 100rpx;
 		color: #ffffff;
 		text-align: center;
-	}
-	.avatar {
-		width: 80rpx;
-		height: 80rpx;
-		border-radius: 40rpx;
-		border-width: 3rpx;
-		border-style: solid;
-		border-color: #ffffff;
-		margin-bottom: 16rpx;
-	}
-	.total {
-		margin-top: 6rpx;
-		font-size: 22rpx;
-		color: #ffffff;
-		font-weight: bold;
-		text-align: center;
-	}
-	.touch-mask {
-		position: absolute;
-		left: 0;
-		top: 0;
-		right: 0;
-		bottom: 120rpx;
 	}
 </style>

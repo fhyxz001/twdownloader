@@ -473,6 +473,17 @@
 
 			buildMediaParams(page) {
 				const cfg = this.config;
+				// 动漫站只受 range 参数影响
+				if (this.currentSource === 'anime') {
+					const params = {
+						page: Math.max(1, page),
+					};
+					if (cfg.range === 'weekly') params.range = 'week';
+					else if (cfg.range === 'monthly') params.range = 'month';
+					else if (cfg.range === 'all') params.range = 'all';
+					// daily 为默认，不传 range
+					return params;
+				}
 				const params = {
 					page: Math.max(1, page),
 					per_page: cfg.per_page,
@@ -519,7 +530,7 @@
 				const payload = res.data;
 				if (!payload || !Array.isArray(payload.items)) throw new Error('数据格式异常');
 				const items = payload.items.map(i => this.normalizeItem(i)).filter(Boolean);
-				const has_next = payload.items.length >= params.per_page;
+				const has_next = payload.items.length >= (params.per_page || 10);
 				return { items, has_next };
 			},
 
@@ -574,6 +585,8 @@
 				this.currentTag = '';
 				this.currentPage = 1;
 				this.pagination.has_next = false;
+				this.items = [];
+				this.selectedIds = new Set();
 				this.loadData();
 			},
 
