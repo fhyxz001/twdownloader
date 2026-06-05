@@ -32,6 +32,18 @@
 					"animationType": "fade-in"
 				}
 			}
+		},
+		{
+			"path": "pages/proxy/proxy",
+			"style": {
+				"navigationBarTitleText": "代理设置"
+			}
+		},
+		{
+			"path": "pages/proxy/edit",
+			"style": {
+				"navigationBarTitleText": "编辑方案"
+			}
 		}
 	],
 	"globalStyle": {

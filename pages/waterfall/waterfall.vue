@@ -6,6 +6,9 @@
 				<view class="nav-header-row">
 					<text class="nav-large-title">探索</text>
 					<view class="nav-actions">
+						<view class="nav-btn" @tap="goToProxy">
+							<image class="nav-btn-icon" src="/static/clash.png" mode="aspectFit" />
+						</view>
 						<view class="nav-btn" @tap="goToFiles">
 							<image class="nav-btn-icon" src="/static/list.png" mode="aspectFit" />
 						</view>
@@ -232,17 +235,6 @@
 							</view>
 						</picker>
 					</view>
-					<view class="setting-group">
-						<view class="setting-row last">
-							<text class="setting-label">HTTP 代理</text>
-							<input
-								class="setting-input"
-								v-model="settingsForm.proxy"
-								placeholder="如 http://127.0.0.1:7890"
-								placeholder-class="setting-input-placeholder"
-							/>
-						</view>
-					</view>
 				</view>
 				<view class="sheet-footer">
 					<text class="sheet-btn-primary" @tap="saveSettings">完成</text>
@@ -331,14 +323,12 @@
 					range: 'daily',
 					min_time: 0,
 					max_time: 86400,
-					proxy: '',
 				},
 				settingsForm: {
 					perPage: 10,
 					sortIndex: 3,
 					rangeIndex: 0,
 					timeFilterIndex: 0,
-					proxy: '',
 				},
 				perPageOptions: [10, 20, 30, 50, 100],
 				sortOptions: [
@@ -412,6 +402,7 @@
 			this.loadData();
 		},
 		onShow() {
+			this.applyProxy();
 		},
 		onBackPress() {
 			if (this.showSettings) {
@@ -423,6 +414,9 @@
 		methods: {
 			goToFiles() {
 				uni.navigateTo({ url: '/pages/files/files' });
+			},
+			goToProxy() {
+				uni.navigateTo({ url: '/pages/proxy/proxy' });
 			},
 			formatDuration(seconds) {
 				const s = Number(seconds);
@@ -454,7 +448,6 @@
 					}
 				} catch (e) {}
 				this.syncSettingsForm();
-				this.applyProxy();
 			},
 			persistConfig() {
 				try {
@@ -462,50 +455,69 @@
 				} catch (e) {}
 			},
 			applyProxy() {
-				const proxy = this.config.proxy;
 				if (typeof plus === 'undefined') return;
+				let host = '';
+				let port = 80;
 				try {
-					const Proxy = plus.android.importClass('java.net.Proxy');
-					const InetSocketAddress = plus.android.importClass('java.net.InetSocketAddress');
-					const ProxySelector = plus.android.importClass('java.net.ProxySelector');
-					const URI = plus.android.importClass('java.net.URI');
-					const Collections = plus.android.importClass('java.util.Collections');
+					const data = uni.getStorageSync('proxy_config');
+					if (data) {
+						const parsed = JSON.parse(data);
+						if (parsed.enabled && parsed.selectedId) {
+							const scheme = (parsed.schemes || []).find(s => s.id === parsed.selectedId);
+							if (scheme) {
+								host = scheme.host;
+								port = scheme.port;
+							}
+						}
+					}
+				} catch (e) {}
+
+				try {
 					const System = plus.android.importClass('java.lang.System');
 
-					if (proxy) {
-						const match = proxy.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
-						if (match) {
-							const host = match[1];
-							const port = parseInt(match[2] || '80');
-							// 设置 Java 系统属性代理
-							System.setProperty('http.proxyHost', host);
-							System.setProperty('http.proxyPort', String(port));
-							System.setProperty('https.proxyHost', host);
-							System.setProperty('https.proxyPort', String(port));
-							// 设置全局 ProxySelector，使所有 Java 网络连接走代理
-							const addr = InetSocketAddress.newInstance(host, port);
-							const proxyObj = Proxy.newInstance(Proxy.Type.HTTP.value, addr);
-							const proxyList = Collections.singletonList(proxyObj);
-							const defaultSelector = ProxySelector.getDefault();
-							const newSelector = {
+					if (host) {
+						System.setProperty('http.proxyHost', host);
+						System.setProperty('http.proxyPort', String(port));
+						System.setProperty('https.proxyHost', host);
+						System.setProperty('https.proxyPort', String(port));
+						try {
+							const InetSocketAddress = plus.android.importClass('java.net.InetSocketAddress');
+							const ProxyClass = plus.android.importClass('java.net.Proxy');
+							const ProxyType = plus.android.importClass('java.net.Proxy$Type');
+							const ProxySelector = plus.android.importClass('java.net.ProxySelector');
+							const Collections = plus.android.importClass('java.util.Collections');
+
+							const addr = new InetSocketAddress(host, port);
+							const httpProxy = new ProxyClass(ProxyType.HTTP, addr);
+							const proxyList = Collections.singletonList(httpProxy);
+
+							const selector = plus.android.implement('java.net.ProxySelector', {
 								select: function(uri) { return proxyList; },
 								connectFailed: function(uri, sa, ioe) {},
-							};
-							ProxySelector.setDefault(plus.android.implement('java.net.ProxySelector', newSelector));
+							});
+							ProxySelector.setDefault(selector);
+						} catch (e2) {
+							console.error('ProxySelector error', e2);
 						}
 					} else {
-						// 清除系统属性代理
 						System.clearProperty('http.proxyHost');
 						System.clearProperty('http.proxyPort');
 						System.clearProperty('https.proxyHost');
 						System.clearProperty('https.proxyPort');
-						// 恢复默认 ProxySelector（直连）
-						const noProxyList = Collections.singletonList(Proxy.NO_PROXY);
-						const newSelector = {
-							select: function(uri) { return noProxyList; },
-							connectFailed: function(uri, sa, ioe) {},
-						};
-						ProxySelector.setDefault(plus.android.implement('java.net.ProxySelector', newSelector));
+						try {
+							const ProxyClass = plus.android.importClass('java.net.Proxy');
+							const ProxySelector = plus.android.importClass('java.net.ProxySelector');
+							const Collections = plus.android.importClass('java.util.Collections');
+
+							const noProxyList = Collections.singletonList(ProxyClass.NO_PROXY);
+							const selector = plus.android.implement('java.net.ProxySelector', {
+								select: function(uri) { return noProxyList; },
+								connectFailed: function(uri, sa, ioe) {},
+							});
+							ProxySelector.setDefault(selector);
+						} catch (e2) {
+							console.error('ProxySelector clear error', e2);
+						}
 					}
 				} catch (e) {
 					console.error('applyProxy error', e);
@@ -521,7 +533,6 @@
 					o => o.min === this.config.min_time && o.max === this.config.max_time
 				);
 				if (this.settingsForm.timeFilterIndex < 0) this.settingsForm.timeFilterIndex = 0;
-				this.settingsForm.proxy = this.config.proxy || '';
 			},
 
 			buildMediaParams(page) {
@@ -764,10 +775,8 @@
 					range: range.value,
 					min_time: timeFilter.min,
 					max_time: timeFilter.max,
-					proxy: (this.settingsForm.proxy || '').trim(),
 				};
 				this.persistConfig();
-				this.applyProxy();
 				this.showSettings = false;
 				this.currentPage = 1;
 				this.pagination.page = 1;
