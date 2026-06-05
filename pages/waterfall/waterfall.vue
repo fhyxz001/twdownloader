@@ -176,10 +176,10 @@
 				<view class="toolbar-divider"></view>
 				<text class="toolbar-selected">已选 {{ selectedIds.size }} 项</text>
 				<text
-					:class="['toolbar-action', selectedIds.size === 0 || downloading ? 'toolbar-action-disabled' : '']"
+					:class="['toolbar-action', selectedIds.size === 0 && !downloading ? 'toolbar-action-disabled' : '']"
 					@tap="downloadSelected"
 				>
-					{{ downloading ? downloadProgress : '下载' }}
+					{{ downloading ? '停止' : '下载' }}
 				</text>
 			</view>
 		</view>
@@ -619,25 +619,37 @@
 			},
 
 			async downloadSelected() {
-				if (this.selectedIds.size === 0 || this.downloading) return;
+				if (this.downloading) {
+					this.cancelDownload = true;
+					if (this._currentDownloadTask) {
+						this._currentDownloadTask.abort();
+						this._currentDownloadTask = null;
+					}
+					return;
+				}
+				if (this.selectedIds.size === 0) return;
 				const selectedItems = this.items.filter(item => this.selectedIds.has(item.id));
 				if (!selectedItems.length) return;
 				this.downloading = true;
+				this.cancelDownload = false;
 				let success = 0;
 				let failed = 0;
 				for (let i = 0; i < selectedItems.length; i++) {
+					if (this.cancelDownload) break;
 					const item = selectedItems[i];
 					this.downloadProgress = `${i + 1}/${selectedItems.length}`;
 					try {
 						await this.downloadOneFile(item);
 						success++;
 					} catch (e) {
+						if (this.cancelDownload) break;
 						failed++;
 					}
 				}
 				this.downloading = false;
 				this.downloadProgress = '';
-				this.selectedIds = new Set();
+				this.cancelDownload = false;
+				if (this.selectedIds.size > 0) this.selectedIds = new Set();
 				if (failed > 0) {
 					uni.showToast({ title: failed + ' 个下载失败', icon: 'none' });
 				}
@@ -648,6 +660,7 @@
 					const task = uni.downloadFile({
 						url: item.url,
 						success: (res) => {
+							if (this.cancelDownload) { resolve(); return; }
 							if (res.statusCode !== 200) { reject(new Error(`下载失败`)); return; }
 							uni.saveFile({
 								tempFilePath: res.tempFilePath,
@@ -667,8 +680,12 @@
 								},
 							});
 						},
-						fail: (err) => reject(new Error(err.errMsg || '下载失败')),
+						fail: (err) => {
+							if (this.cancelDownload) { resolve(); return; }
+							reject(new Error(err.errMsg || '下载失败'));
+						},
 					});
+					this._currentDownloadTask = task;
 					task.onProgressUpdate((res) => {
 						this.downloadProgress = `${res.progress}%`;
 					});
