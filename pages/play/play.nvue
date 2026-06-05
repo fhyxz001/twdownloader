@@ -3,6 +3,14 @@
 		<swiper class="swiper" :style="screenStyle" :vertical="true" :current="current" :duration="200" :circular="false" @change="onChange">
 			<swiper-item v-for="(item, idx) in videoList" :key="idx">
 				<view class="slide" :style="screenStyle">
+					<!-- 手势遮罩：放在最前面，使其层级低于其他UI元素，不阻挡按钮和进度条点击 -->
+					<view
+						class="touch-mask"
+						@touchstart="onTouchStart"
+						@touchmove.stop.prevent="onTouchMove"
+						@touchend="onTouchEnd"
+					></view>
+
 					<video
 					:id="'pv-' + idx"
 					class="video"
@@ -14,7 +22,7 @@
 					:controls="true"
 					:show-fullscreen-btn="false"
 					:show-center-play-btn="true"
-					:enable-progress-gesture="false"
+					:enable-progress-gesture="true"
 					object-fit="contain"
 					@play="onVideoPlay(idx)"
 				></video>
@@ -36,14 +44,6 @@
 						<image class="icon" src="/static/h.png"></image>
 					</view>
 				</view>
-
-					<!-- 手势遮罩：拦截滑动，提高灵敏度 -->
-					<view
-						class="touch-mask"
-						@touchstart="onTouchStart"
-						@touchmove.stop.prevent="onTouchMove"
-						@touchend="onTouchEnd"
-					></view>
 				</view>
 			</swiper-item>
 		</swiper>
@@ -181,7 +181,7 @@
 			},
 			toggleLandscape() {
 				const ctx = uni.createVideoContext('pv-' + this.current, this);
-				if (ctx) ctx.requestFullScreen({ direction: 90 });
+				if (ctx) ctx.requestFullScreen({ direction: -90 });
 			},
 			goBack() {
 				uni.navigateBack({ delta: 1 });
@@ -261,6 +261,6 @@
 		left: 0;
 		top: 0;
 		right: 0;
-		bottom: 0;
+		bottom: 120rpx;
 	}
 </style>

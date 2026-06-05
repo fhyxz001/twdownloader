@@ -17,11 +17,22 @@
 						</view>
 					</view>
 				</view>
+				<!-- 接口源切换 -->
+				<view class="source-switch">
+					<view
+						v-for="src in sources"
+						:key="src.key"
+						:class="['source-btn', currentSource === src.key ? 'source-btn-active' : '']"
+						@tap="switchSource(src.key)"
+					>
+						<text class="source-btn-text">{{ src.name }}</text>
+					</view>
+				</view>
 			</view>
 		</view>
 
-		<!-- 分类标签栏 -->
-		<scroll-view class="tab-scroll" scroll-x show-scrollbar="false" enable-flex>
+		<!-- 分类标签栏（仅主站显示） -->
+		<scroll-view v-if="sourceHasTabs" class="tab-scroll" scroll-x show-scrollbar="false" enable-flex>
 			<view class="tab-track">
 				<view
 					v-for="tab in tabs"
@@ -232,7 +243,11 @@
 
 <script>
 
-	const MEDIA_API_URL = 'https://truvaze.com/api/media';
+	// 接口源：主站有分类标签，动漫站无标签
+	const SOURCES = [
+		{ key: 'main', name: '主站', url: 'https://truvaze.com/api/media', hasTabs: true },
+		{ key: 'anime', name: '动漫站', url: 'https://x-ero-anime.com/api/media', hasTabs: false },
+	];
 
 	const ALL_TAGS = [
 		{ code: 'shirouto', name: '业余的' },
@@ -290,6 +305,8 @@
 	export default {
 		data() {
 			return {
+				sources: SOURCES,
+				currentSource: 'main',
 				tabs: [{ code: '', name: '全部' }],
 				currentTag: '',
 				currentPage: 1,
@@ -340,6 +357,12 @@
 			};
 		},
 		computed: {
+			currentSourceConfig() {
+				return this.sources.find(s => s.key === this.currentSource) || this.sources[0];
+			},
+			sourceHasTabs() {
+				return this.currentSourceConfig.hasTabs;
+			},
 			isAllSelected() {
 				return this.items.length > 0 && this.items.every(item => this.selectedIds.has(item.id));
 			},
@@ -459,7 +482,7 @@
 				};
 				if (cfg.min_time > 0) params.min_time = cfg.min_time;
 				if (cfg.max_time < 86400) params.max_time = cfg.max_time;
-				if (this.currentTag) params.category = this.currentTag;
+				if (this.sourceHasTabs && this.currentTag) params.category = this.currentTag;
 				if (cfg.range !== 'daily') params.range = cfg.range;
 				return params;
 			},
@@ -484,7 +507,7 @@
 				const params = this.buildMediaParams(page);
 				const res = await new Promise((resolve, reject) => {
 					uni.request({
-						url: MEDIA_API_URL,
+						url: this.currentSourceConfig.url,
 						method: 'GET',
 						data: params,
 						timeout: 30000,
@@ -540,6 +563,15 @@
 			switchTab(code) {
 				if (code === this.currentTag || this.loading) return;
 				this.currentTag = code;
+				this.currentPage = 1;
+				this.pagination.has_next = false;
+				this.loadData();
+			},
+			switchSource(key) {
+				if (key === this.currentSource || this.loading) return;
+				this.currentSource = key;
+				// 切换源时重置分类与分页
+				this.currentTag = '';
 				this.currentPage = 1;
 				this.pagination.has_next = false;
 				this.loadData();
@@ -723,6 +755,37 @@
 		color: #000;
 		letter-spacing: -1rpx;
 		line-height: 1.1;
+	}
+
+	/* ===== 接口源切换 ===== */
+	.source-switch {
+		display: flex;
+		margin-top: 20rpx;
+		padding: 4rpx;
+		background-color: rgba(118, 118, 128, 0.12);
+		border-radius: 18rpx;
+	}
+	.source-btn {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 56rpx;
+		border-radius: 14rpx;
+		transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+	}
+	.source-btn-active {
+		background-color: #fff;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
+	}
+	.source-btn-text {
+		font-size: 28rpx;
+		font-weight: 500;
+		color: #8E8E93;
+	}
+	.source-btn-active .source-btn-text {
+		color: #007AFF;
+		font-weight: 600;
 	}
 
 	/* ===== 分类标签栏 ===== */
