@@ -159,6 +159,16 @@
 
 		<!-- 底部工具栏 -->
 		<view class="toolbar" v-if="selectedIds.size > 0 || items.length > 0">
+			<!-- 下载进度条 -->
+			<view class="toolbar-progress" v-if="downloading">
+				<view class="progress-bar-track">
+					<view class="progress-bar-fill" :style="{ width: downloadProgress + '%' }"></view>
+				</view>
+				<view class="progress-info">
+					<text class="progress-text">{{ downloadCurrentIndex }}/{{ downloadTotalCount }} 个文件</text>
+					<text class="progress-percent">{{ downloadProgress }}%</text>
+				</view>
+			</view>
 			<view class="toolbar-inner">
 				<text class="toolbar-btn" @tap="toggleSelectAll">
 					{{ isAllSelected ? '取消全选' : '全选' }}
@@ -221,6 +231,17 @@
 								</view>
 							</view>
 						</picker>
+					</view>
+					<view class="setting-group">
+						<view class="setting-row last">
+							<text class="setting-label">HTTP 代理</text>
+							<input
+								class="setting-input"
+								v-model="settingsForm.proxy"
+								placeholder="如 http://127.0.0.1:7890"
+								placeholder-class="setting-input-placeholder"
+							/>
+						</view>
 					</view>
 				</view>
 				<view class="sheet-footer">
@@ -301,19 +322,23 @@
 				loadError: '',
 				showSettings: false,
 				downloading: false,
-				downloadProgress: '',
+				downloadProgress: 0,
+				downloadCurrentIndex: 0,
+				downloadTotalCount: 0,
 				config: {
 					per_page: 10,
 					sort: 'pv',
 					range: 'daily',
 					min_time: 0,
 					max_time: 86400,
+					proxy: '',
 				},
 				settingsForm: {
 					perPage: 10,
 					sortIndex: 3,
 					rangeIndex: 0,
 					timeFilterIndex: 0,
+					proxy: '',
 				},
 				perPageOptions: [10, 20, 30, 50, 100],
 				sortOptions: [
@@ -429,11 +454,62 @@
 					}
 				} catch (e) {}
 				this.syncSettingsForm();
+				this.applyProxy();
 			},
 			persistConfig() {
 				try {
 					uni.setStorageSync('waterfall_config', JSON.stringify(this.config));
 				} catch (e) {}
+			},
+			applyProxy() {
+				const proxy = this.config.proxy;
+				if (typeof plus === 'undefined') return;
+				try {
+					const Proxy = plus.android.importClass('java.net.Proxy');
+					const InetSocketAddress = plus.android.importClass('java.net.InetSocketAddress');
+					const ProxySelector = plus.android.importClass('java.net.ProxySelector');
+					const URI = plus.android.importClass('java.net.URI');
+					const Collections = plus.android.importClass('java.util.Collections');
+					const System = plus.android.importClass('java.lang.System');
+
+					if (proxy) {
+						const match = proxy.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
+						if (match) {
+							const host = match[1];
+							const port = parseInt(match[2] || '80');
+							// 设置 Java 系统属性代理
+							System.setProperty('http.proxyHost', host);
+							System.setProperty('http.proxyPort', String(port));
+							System.setProperty('https.proxyHost', host);
+							System.setProperty('https.proxyPort', String(port));
+							// 设置全局 ProxySelector，使所有 Java 网络连接走代理
+							const addr = InetSocketAddress.newInstance(host, port);
+							const proxyObj = Proxy.newInstance(Proxy.Type.HTTP.value, addr);
+							const proxyList = Collections.singletonList(proxyObj);
+							const defaultSelector = ProxySelector.getDefault();
+							const newSelector = {
+								select: function(uri) { return proxyList; },
+								connectFailed: function(uri, sa, ioe) {},
+							};
+							ProxySelector.setDefault(plus.android.implement('java.net.ProxySelector', newSelector));
+						}
+					} else {
+						// 清除系统属性代理
+						System.clearProperty('http.proxyHost');
+						System.clearProperty('http.proxyPort');
+						System.clearProperty('https.proxyHost');
+						System.clearProperty('https.proxyPort');
+						// 恢复默认 ProxySelector（直连）
+						const noProxyList = Collections.singletonList(Proxy.NO_PROXY);
+						const newSelector = {
+							select: function(uri) { return noProxyList; },
+							connectFailed: function(uri, sa, ioe) {},
+						};
+						ProxySelector.setDefault(plus.android.implement('java.net.ProxySelector', newSelector));
+					}
+				} catch (e) {
+					console.error('applyProxy error', e);
+				}
 			},
 			syncSettingsForm() {
 				this.settingsForm.perPage = this.config.per_page || 10;
@@ -445,6 +521,7 @@
 					o => o.min === this.config.min_time && o.max === this.config.max_time
 				);
 				if (this.settingsForm.timeFilterIndex < 0) this.settingsForm.timeFilterIndex = 0;
+				this.settingsForm.proxy = this.config.proxy || '';
 			},
 
 			buildMediaParams(page) {
@@ -585,12 +662,16 @@
 				if (!selectedItems.length) return;
 				this.downloading = true;
 				this.cancelDownload = false;
+				this.downloadTotalCount = selectedItems.length;
+				this.downloadCurrentIndex = 0;
+				this.downloadProgress = 0;
 				let success = 0;
 				let failed = 0;
 				for (let i = 0; i < selectedItems.length; i++) {
 					if (this.cancelDownload) break;
 					const item = selectedItems[i];
-					this.downloadProgress = `${i + 1}/${selectedItems.length}`;
+					this.downloadCurrentIndex = i + 1;
+					this.downloadProgress = 0;
 					try {
 						await this.downloadOneFile(item);
 						success++;
@@ -600,7 +681,9 @@
 					}
 				}
 				this.downloading = false;
-				this.downloadProgress = '';
+				this.downloadProgress = 0;
+				this.downloadCurrentIndex = 0;
+				this.downloadTotalCount = 0;
 				this.cancelDownload = false;
 				if (this.selectedIds.size > 0) this.selectedIds = new Set();
 				if (failed > 0) {
@@ -640,7 +723,7 @@
 					});
 					this._currentDownloadTask = task;
 					task.onProgressUpdate((res) => {
-						this.downloadProgress = `${res.progress}%`;
+						this.downloadProgress = res.progress;
 					});
 				});
 			},
@@ -681,8 +764,10 @@
 					range: range.value,
 					min_time: timeFilter.min,
 					max_time: timeFilter.max,
+					proxy: (this.settingsForm.proxy || '').trim(),
 				};
 				this.persistConfig();
+				this.applyProxy();
 				this.showSettings = false;
 				this.currentPage = 1;
 				this.pagination.page = 1;
@@ -1045,6 +1130,38 @@
 		opacity: 0.4;
 	}
 
+	/* ===== 下载进度条 ===== */
+	.toolbar-progress {
+		padding: 16rpx 32rpx 0;
+	}
+	.progress-bar-track {
+		height: 8rpx;
+		border-radius: 4rpx;
+		background-color: rgba(0, 122, 255, 0.15);
+		overflow: hidden;
+	}
+	.progress-bar-fill {
+		height: 100%;
+		border-radius: 4rpx;
+		background-color: #007AFF;
+		transition: width 0.3s ease;
+	}
+	.progress-info {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 8rpx;
+	}
+	.progress-text {
+		font-size: 22rpx;
+		color: #8E8E93;
+	}
+	.progress-percent {
+		font-size: 22rpx;
+		color: #007AFF;
+		font-weight: 600;
+	}
+
 	/* ===== iOS Sheet 弹窗 ===== */
 	.sheet-mask {
 		position: fixed;
@@ -1127,6 +1244,19 @@
 		font-size: 36rpx;
 		color: #C7C7CC;
 		font-weight: 300;
+	}
+	.setting-input {
+		flex: 1;
+		font-size: 28rpx;
+		color: #1C1C1E;
+		text-align: right;
+		padding: 0;
+		margin: 0;
+		background: transparent;
+	}
+	.setting-input-placeholder {
+		color: #C7C7CC;
+		font-size: 26rpx;
 	}
 	.sheet-footer {
 		padding: 24rpx 32rpx;
