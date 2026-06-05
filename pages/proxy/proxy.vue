@@ -154,52 +154,16 @@
 				if (typeof plus === 'undefined') return;
 				try {
 					const System = plus.android.importClass('java.lang.System');
-
 					if (scheme) {
-						const host = scheme.host;
-						const port = scheme.port;
-						System.setProperty('http.proxyHost', host);
-						System.setProperty('http.proxyPort', String(port));
-						System.setProperty('https.proxyHost', host);
-						System.setProperty('https.proxyPort', String(port));
-						try {
-							const InetSocketAddress = plus.android.importClass('java.net.InetSocketAddress');
-							const ProxyClass = plus.android.importClass('java.net.Proxy');
-							const ProxyType = plus.android.importClass('java.net.Proxy$Type');
-							const ProxySelector = plus.android.importClass('java.net.ProxySelector');
-							const Collections = plus.android.importClass('java.util.Collections');
-
-							const addr = new InetSocketAddress(host, port);
-							const httpProxy = new ProxyClass(ProxyType.HTTP, addr);
-							const proxyList = Collections.singletonList(httpProxy);
-
-							const selector = plus.android.implement('java.net.ProxySelector', {
-								select: function(uri) { return proxyList; },
-								connectFailed: function(uri, sa, ioe) {},
-							});
-							ProxySelector.setDefault(selector);
-						} catch (e2) {
-							console.error('ProxySelector error', e2);
-						}
+						System.setProperty('http.proxyHost', scheme.host);
+						System.setProperty('http.proxyPort', String(scheme.port));
+						System.setProperty('https.proxyHost', scheme.host);
+						System.setProperty('https.proxyPort', String(scheme.port));
 					} else {
 						System.clearProperty('http.proxyHost');
 						System.clearProperty('http.proxyPort');
 						System.clearProperty('https.proxyHost');
 						System.clearProperty('https.proxyPort');
-						try {
-							const ProxyClass = plus.android.importClass('java.net.Proxy');
-							const ProxySelector = plus.android.importClass('java.net.ProxySelector');
-							const Collections = plus.android.importClass('java.util.Collections');
-
-							const noProxyList = Collections.singletonList(ProxyClass.NO_PROXY);
-							const selector = plus.android.implement('java.net.ProxySelector', {
-								select: function(uri) { return noProxyList; },
-								connectFailed: function(uri, sa, ioe) {},
-							});
-							ProxySelector.setDefault(selector);
-						} catch (e2) {
-							console.error('ProxySelector clear error', e2);
-						}
 					}
 				} catch (e) {
 					console.error('applyProxy error', e);
