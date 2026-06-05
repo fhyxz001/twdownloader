@@ -17,22 +17,12 @@
 						</view>
 					</view>
 				</view>
-				<!-- 接口源切换 -->
-				<view class="source-switch">
-					<view
-						v-for="src in sources"
-						:key="src.key"
-						:class="['source-btn', currentSource === src.key ? 'source-btn-active' : '']"
-						@tap="switchSource(src.key)"
-					>
-						<text class="source-btn-text">{{ src.name }}</text>
-					</view>
-				</view>
+
 			</view>
 		</view>
 
-		<!-- 分类标签栏（仅主站显示） -->
-		<scroll-view v-if="sourceHasTabs" class="tab-scroll" scroll-x show-scrollbar="false" enable-flex>
+		<!-- 分类标签栏 -->
+		<scroll-view class="tab-scroll" scroll-x show-scrollbar="false" enable-flex>
 			<view class="tab-track">
 				<view
 					v-for="tab in tabs"
@@ -243,70 +233,62 @@
 
 <script>
 
-	// 接口源：主站有分类标签，动漫站无标签
-	const SOURCES = [
-		{ key: 'main', name: '主站', url: 'https://truvaze.com/api/media', hasTabs: true },
-		{ key: 'anime', name: '动漫站', url: 'https://x-ero-anime.com/api/media', hasTabs: false },
-	];
-
 	const ALL_TAGS = [
-		{ code: 'shirouto', name: '业余的' },
-		{ code: 'kyonyu', name: '巨乳' },
-		{ code: 'masturbation', name: '自我表达' },
-		{ code: 'jk', name: '女高中生' },
-		{ code: 'anime', name: '二次元' },
-		{ code: 'female-teacher', name: '女教师' },
-		{ code: 'nurse', name: '护士' },
-		{ code: 'female-pervert', name: '大胆女性' },
-		{ code: 'married-woman', name: '少妇' },
-		{ code: 'beautiful-girl', name: '美少女' },
-		{ code: 'big-sister', name: '姐姐' },
-		{ code: 'gal', name: '时尚女孩' },
-		{ code: 'shaved', name: '光滑风格' },
-		{ code: 'small-breasts', name: '小胸' },
-		{ code: 'lolita', name: '少女系' },
-		{ code: 'swimsuit', name: '泳装' },
-		{ code: 'sm', name: 'SM' },
-		{ code: 'special-feature', name: '企划' },
-		{ code: 'incest', name: '家庭主题' },
-		{ code: 'rape', name: '冲突主题' },
-		{ code: 'molestation', name: '骚扰主题' },
-		{ code: 'voyeur', name: '隐藏拍摄' },
-		{ code: 'pickup', name: '邂逅' },
-		{ code: 'massage', name: '按摩' },
-		{ code: 'outdoor', name: '户外场景' },
-		{ code: 'orgy', name: '群体场景' },
-		{ code: 'anal', name: '背面主题' },
-		{ code: 'deep-throat', name: '深层表达' },
-		{ code: 'facial', name: '面部艺术' },
-		{ code: 'cum-swallowing', name: '吞咽主题' },
-		{ code: 'handjob', name: '手部表演' },
-		{ code: 'creampie', name: '内部主题' },
-		{ code: 'titjob', name: '胸部表演' },
-		{ code: 'fellatio', name: '口部艺术' },
-		{ code: 'bukkake', name: '泼洒艺术' },
-		{ code: 'hamedori', name: '自摄' },
-		{ code: 'personal-filming', name: '私人拍摄' },
-		{ code: 'uncensored', name: '未修饰' },
-		{ code: 'gay', name: '男同性恋・男娘' },
-		{ code: 'cosplay', name: '角色扮演' },
-		{ code: 'ja', name: '日本' },
-		{ code: 'zh-CN', name: '中国' },
-		{ code: 'th', name: '泰国' },
-		{ code: 'en', name: '英语' },
-		{ code: 'zh-TW', name: '繁体中文' },
-		{ code: 'ko', name: '韩语' },
-		{ code: 'id', name: '印尼语' },
-		{ code: 'pt', name: '葡萄牙语' },
-		{ code: 'fr', name: '法语' },
-		{ code: 'de', name: '德语' },
+	{ code: 'kyonyu', name: '巨乳' },
+{ code: 'creampie', name: '中出' },
+{ code: 'uncensored', name: '无码' },
+{ code: 'lolita', name: '萝莉' },
+{ code: 'married-woman', name: '人妻' },
+{ code: 'beautiful-girl', name: '美少女' },
+{ code: 'masturbation', name: '自慰' },
+{ code: 'shaved', name: '无毛' },
+{ code: 'anal', name: '后门' },
+{ code: 'facial', name: '颜射' },
+{ code: 'small-breasts', name: '贫乳' },
+{ code: 'jk', name: '女高中生' },
+{ code: 'female-pervert', name: '痴女' },
+{ code: 'gal', name: '辣妹' },
+{ code: 'cum-swallowing', name: '吞精' },
+{ code: 'fellatio', name: '口交' },
+{ code: 'handjob', name: '手交' },
+{ code: 'titjob', name: '乳交' },
+{ code: 'deep-throat', name: '深喉' },
+{ code: 'bukkake', name: '颜面' },
+{ code: 'shirouto', name: '素人' },
+{ code: 'incest', name: '乱伦' },
+{ code: 'rape', name: '强奸' },
+{ code: 'molestation', name: '痴汉' },
+{ code: 'orgy', name: '乱交' },
+{ code: 'outdoor', name: '户外' },
+{ code: 'voyeur', name: '偷拍' },
+{ code: 'pickup', name: '搭讪' },
+{ code: 'cosplay', name: 'cosplay' },
+{ code: 'anime', name: '二次元' },
+{ code: 'sm', name: 'SM' },
+{ code: 'hamedori', name: '自拍' },
+{ code: 'personal-filming', name: '私人' },
+{ code: 'female-teacher', name: '女教师' },
+{ code: 'nurse', name: '护士' },
+{ code: 'big-sister', name: '姐姐' },
+{ code: 'swimsuit', name: '泳装' },
+{ code: 'special-feature', name: '企划' },
+{ code: 'massage', name: '按摩' },
+{ code: 'gay', name: 'gay/伪娘' },
+{ code: 'ja', name: '日本' },
+{ code: 'zh-CN', name: '中国' },
+{ code: 'th', name: '泰国' },
+{ code: 'en', name: '英语' },
+{ code: 'zh-TW', name: '繁体' },
+{ code: 'ko', name: '韩语' },
+{ code: 'id', name: '印尼' },
+{ code: 'pt', name: '葡萄牙' },
+{ code: 'fr', name: '法语' },
+{ code: 'de', name: '德语' },
 	];
 
 	export default {
 		data() {
 			return {
-				sources: SOURCES,
-				currentSource: 'main',
 				tabs: [{ code: '', name: '全部' }],
 				currentTag: '',
 				currentPage: 1,
@@ -357,12 +339,6 @@
 			};
 		},
 		computed: {
-			currentSourceConfig() {
-				return this.sources.find(s => s.key === this.currentSource) || this.sources[0];
-			},
-			sourceHasTabs() {
-				return this.currentSourceConfig.hasTabs;
-			},
 			isAllSelected() {
 				return this.items.length > 0 && this.items.every(item => this.selectedIds.has(item.id));
 			},
@@ -473,17 +449,6 @@
 
 			buildMediaParams(page) {
 				const cfg = this.config;
-				// 动漫站只受 range 参数影响
-				if (this.currentSource === 'anime') {
-					const params = {
-						page: Math.max(1, page),
-					};
-					if (cfg.range === 'weekly') params.range = 'week';
-					else if (cfg.range === 'monthly') params.range = 'month';
-					else if (cfg.range === 'all') params.range = 'all';
-					// daily 为默认，不传 range
-					return params;
-				}
 				const params = {
 					page: Math.max(1, page),
 					per_page: cfg.per_page,
@@ -493,7 +458,7 @@
 				};
 				if (cfg.min_time > 0) params.min_time = cfg.min_time;
 				if (cfg.max_time < 86400) params.max_time = cfg.max_time;
-				if (this.sourceHasTabs && this.currentTag) params.category = this.currentTag;
+				if (this.currentTag) params.category = this.currentTag;
 				if (cfg.range !== 'daily') params.range = cfg.range;
 				return params;
 			},
@@ -518,7 +483,7 @@
 				const params = this.buildMediaParams(page);
 				const res = await new Promise((resolve, reject) => {
 					uni.request({
-						url: this.currentSourceConfig.url,
+						url: 'https://truvaze.com/api/media',
 						method: 'GET',
 						data: params,
 						timeout: 30000,
@@ -530,7 +495,7 @@
 				const payload = res.data;
 				if (!payload || !Array.isArray(payload.items)) throw new Error('数据格式异常');
 				const items = payload.items.map(i => this.normalizeItem(i)).filter(Boolean);
-				const has_next = payload.items.length >= (params.per_page || 10);
+				const has_next = payload.items.length >= params.per_page;
 				return { items, has_next };
 			},
 
@@ -578,18 +543,6 @@
 				this.pagination.has_next = false;
 				this.loadData();
 			},
-			switchSource(key) {
-				if (key === this.currentSource || this.loading) return;
-				this.currentSource = key;
-				// 切换源时重置分类与分页
-				this.currentTag = '';
-				this.currentPage = 1;
-				this.pagination.has_next = false;
-				this.items = [];
-				this.selectedIds = new Set();
-				this.loadData();
-			},
-
 			toggleSelect(id) {
 				const newSet = new Set(this.selectedIds);
 				if (newSet.has(id)) newSet.delete(id);
@@ -785,37 +738,6 @@
 		color: #000;
 		letter-spacing: -1rpx;
 		line-height: 1.1;
-	}
-
-	/* ===== 接口源切换 ===== */
-	.source-switch {
-		display: flex;
-		margin-top: 20rpx;
-		padding: 4rpx;
-		background-color: rgba(118, 118, 128, 0.12);
-		border-radius: 18rpx;
-	}
-	.source-btn {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 56rpx;
-		border-radius: 14rpx;
-		transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-	}
-	.source-btn-active {
-		background-color: #fff;
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
-	}
-	.source-btn-text {
-		font-size: 28rpx;
-		font-weight: 500;
-		color: #8E8E93;
-	}
-	.source-btn-active .source-btn-text {
-		color: #007AFF;
-		font-weight: 600;
 	}
 
 	/* ===== 分类标签栏 ===== */

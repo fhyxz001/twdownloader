@@ -20,7 +20,7 @@
 			<image class="back-icon" src="/static/back.png"></image>
 		</view>
 
-		<!-- 左下角控制栏 -->
+		<!-- 右下角控制栏 -->
 		<view class="controls" :style="{ bottom: controlsBottom + 'px' }">
 			<view class="ctrl-item" @click="prev">
 				<text class="arrow">&#9650;</text>
@@ -136,7 +136,7 @@
 	}
 	.controls {
 		position: absolute;
-		left: 24rpx;
+		right: 24rpx;
 		flex-direction: column;
 		align-items: center;
 	}
