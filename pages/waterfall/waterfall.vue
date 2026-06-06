@@ -4,8 +4,11 @@
 		<view class="nav-bar">
 			<view class="nav-content">
 				<view class="nav-header-row">
-					<text class="nav-large-title">探索</text>
+					<text class="nav-large-title">Xhub</text>
 					<view class="nav-actions">
+						<view class="nav-btn" @tap="toggleSelectMode">
+							<image class="nav-btn-icon" :src="selectMode ? '/static/select_blue.png' : '/static/select.png'" mode="aspectFit" />
+						</view>
 						<view class="nav-btn" @tap="goToProxy">
 							<image class="nav-btn-icon" src="/static/clash.png" mode="aspectFit" />
 						</view>
@@ -62,7 +65,7 @@
 					<view
 						v-for="item in leftItems"
 						:key="item.id"
-						:class="['card', selectedIds.has(item.id) ? 'card-selected' : '']"
+						:class="['card', selectMode && selectedIds.has(item.id) ? 'card-selected' : '']"
 						@tap="onCardTap(item)"
 					>
 						<view class="poster">
@@ -77,7 +80,7 @@
 								<text class="fallback-icon">&#9654;</text>
 							</view>
 							<!-- 选中指示器 -->
-							<view class="select-indicator" @tap.stop="toggleSelect(item.id)">
+							<view class="select-indicator" v-if="selectMode" @tap.stop="toggleSelect(item.id)">
 								<view :class="['indicator-circle', selectedIds.has(item.id) ? 'indicator-checked' : '']">
 									<text v-if="selectedIds.has(item.id)" class="indicator-check">&#10003;</text>
 								</view>
@@ -105,7 +108,7 @@
 					<view
 						v-for="item in rightItems"
 						:key="item.id"
-						:class="['card', selectedIds.has(item.id) ? 'card-selected' : '']"
+						:class="['card', selectMode && selectedIds.has(item.id) ? 'card-selected' : '']"
 						@tap="onCardTap(item)"
 					>
 						<view class="poster">
@@ -119,7 +122,7 @@
 							<view v-else class="poster-fallback">
 								<text class="fallback-icon">&#9654;</text>
 							</view>
-							<view class="select-indicator" @tap.stop="toggleSelect(item.id)">
+							<view class="select-indicator" v-if="selectMode" @tap.stop="toggleSelect(item.id)">
 								<view :class="['indicator-circle', selectedIds.has(item.id) ? 'indicator-checked' : '']">
 									<text v-if="selectedIds.has(item.id)" class="indicator-check">&#10003;</text>
 								</view>
@@ -161,7 +164,7 @@
 		</scroll-view>
 
 		<!-- 底部工具栏 -->
-		<view class="toolbar" v-if="selectedIds.size > 0 || items.length > 0">
+		<view class="toolbar" v-if="selectMode">
 			<!-- 下载进度条 -->
 			<view class="toolbar-progress" v-if="downloading">
 				<view class="progress-bar-track">
@@ -173,6 +176,8 @@
 				</view>
 			</view>
 			<view class="toolbar-inner">
+				<text class="toolbar-btn" @tap="toggleSelectMode">取消</text>
+				<view class="toolbar-divider"></view>
 				<text class="toolbar-btn" @tap="toggleSelectAll">
 					{{ isAllSelected ? '取消全选' : '全选' }}
 				</text>
@@ -307,6 +312,7 @@
 				currentPage: 1,
 				pagination: { page: 1, per_page: 10, has_next: false },
 				items: [],
+				selectMode: false,
 				selectedIds: new Set(),
 				loading: false,
 				loadingMore: false,
@@ -598,10 +604,17 @@
 				this.loadData();
 			},
 			toggleSelect(id) {
+				if (!this.selectMode) return;
 				const newSet = new Set(this.selectedIds);
 				if (newSet.has(id)) newSet.delete(id);
 				else newSet.add(id);
 				this.selectedIds = newSet;
+			},
+			toggleSelectMode() {
+				this.selectMode = !this.selectMode;
+				if (!this.selectMode) {
+					this.selectedIds = new Set();
+				}
 			},
 			toggleSelectAll() {
 				const newSet = new Set(this.selectedIds);
@@ -611,6 +624,10 @@
 			},
 
 			onCardTap(item) {
+				if (this.selectMode) {
+					this.toggleSelect(item.id);
+					return;
+				}
 				const index = this.items.findIndex(candidate => candidate.id === item.id);
 				this.openPreview(index >= 0 ? index : 0);
 			},
