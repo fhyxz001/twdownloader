@@ -47,10 +47,10 @@
 		}
 	],
 	"globalStyle": {
-		"navigationBarTextStyle": "black",
+		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "TW Downloader",
-		"navigationBarBackgroundColor": "#F4F1EA",
-		"backgroundColor": "#F4F1EA"
+		"navigationBarBackgroundColor": "#0C0A09",
+		"backgroundColor": "#0C0A09"
 	},
 	"uniIdRouter": {}
 }

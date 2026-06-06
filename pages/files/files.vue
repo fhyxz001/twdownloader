@@ -329,12 +329,12 @@
 		display: flex;
 		flex-direction: column;
 		height: 100vh;
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 	}
 
 	/* 导航栏 */
 	.nav-bar {
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 		padding-top: var(--status-bar-height, 44px);
 	}
 	.nav-content {
@@ -352,24 +352,24 @@
 	}
 	.nav-back-icon {
 		font-size: 44rpx;
-		color: #007AFF;
+		color: #EAB308;
 		font-weight: 300;
 	}
 	.nav-back-text {
 		font-size: 30rpx;
-		color: #007AFF;
+		color: #EAB308;
 	}
 	.nav-title {
 		font-size: 34rpx;
 		font-weight: 600;
-		color: #1C1C1E;
+		color: #FAFAF9;
 	}
 	.nav-action {
 		padding: 8rpx 16rpx;
 	}
 	.nav-action-text {
 		font-size: 30rpx;
-		color: #007AFF;
+		color: #EAB308;
 		font-weight: 500;
 	}
 
@@ -410,7 +410,7 @@
 		width: 160rpx;
 	}
 	.swipe-btn-delete {
-		background-color: #FF3B30;
+		background-color: #EF4444;
 		border-radius: 0 20rpx 20rpx 0;
 	}
 	.swipe-btn-text {
@@ -424,11 +424,11 @@
 		display: flex;
 		align-items: center;
 		padding: 20rpx 24rpx;
-		background-color: #fff;
+		background-color: #1C1917;
 		gap: 20rpx;
 	}
 	.file-item-selected {
-		background-color: rgba(0, 122, 255, 0.06);
+		background-color: rgba(234, 179, 8, 0.08);
 	}
 
 	/* 选择框 */
@@ -439,18 +439,18 @@
 		width: 44rpx;
 		height: 44rpx;
 		border-radius: 50%;
-		border: 3rpx solid #C7C7CC;
+		border: 3rpx solid #57534E;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		transition: all 0.15s ease;
 	}
 	.check-circle-on {
-		background-color: #007AFF;
-		border-color: #007AFF;
+		background-color: #EAB308;
+		border-color: #EAB308;
 	}
 	.check-mark {
-		color: #fff;
+		color: #0C0A09;
 		font-size: 24rpx;
 		font-weight: 700;
 	}
@@ -463,7 +463,7 @@
 		border-radius: 12rpx;
 		overflow: hidden;
 		flex-shrink: 0;
-		background-color: #1C1C1E;
+		background-color: #292524;
 	}
 	.thumb-img {
 		width: 100%;
@@ -488,7 +488,7 @@
 		justify-content: center;
 	}
 	.thumb-play-icon {
-		color: rgba(255, 255, 255, 0.85);
+		color: #EAB308;
 		font-size: 28rpx;
 		text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.5);
 	}
@@ -501,7 +501,7 @@
 	.file-name {
 		font-size: 28rpx;
 		font-weight: 500;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		line-height: 1.4;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
@@ -510,7 +510,7 @@
 	}
 	.file-date {
 		font-size: 24rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 		margin-top: 6rpx;
 		display: block;
 	}
@@ -528,13 +528,13 @@
 	.empty-title {
 		font-size: 34rpx;
 		font-weight: 600;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		display: block;
 		margin-bottom: 8rpx;
 	}
 	.empty-desc {
 		font-size: 28rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 		display: block;
 	}
 
@@ -549,9 +549,9 @@
 		right: 0;
 		bottom: 0;
 		z-index: 50;
-		background-color: rgba(249, 249, 249, 0.94);
+		background-color: rgba(28, 25, 23, 0.95);
 		backdrop-filter: blur(20px);
-		border-top: 1rpx solid rgba(0, 0, 0, 0.08);
+		border-top: 1rpx solid #44403C;
 	}
 	.edit-bar-inner {
 		display: flex;
@@ -562,21 +562,21 @@
 	}
 	.edit-select-all {
 		font-size: 28rpx;
-		color: #007AFF;
+		color: #EAB308;
 		font-weight: 500;
 	}
 	.edit-count {
 		flex: 1;
 		font-size: 26rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 	.edit-delete {
 		font-size: 28rpx;
-		color: #fff;
+		color: #FAFAF9;
 		font-weight: 600;
 		padding: 14rpx 36rpx;
 		border-radius: 20rpx;
-		background-color: #FF3B30;
+		background-color: #EF4444;
 	}
 	.edit-delete-disabled {
 		opacity: 0.4;

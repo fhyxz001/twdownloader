@@ -111,39 +111,40 @@
 <style scoped>
 	.page {
 		min-height: 100vh;
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 		padding-bottom: env(safe-area-inset-bottom);
 	}
 
 	.form-section {
 		margin: 24rpx 32rpx;
-		background-color: #fff;
+		background-color: #1C1917;
 		border-radius: 20rpx;
 		overflow: hidden;
+		border: 1rpx solid #44403C;
 	}
 	.form-row {
 		display: flex;
 		align-items: center;
 		padding: 28rpx 32rpx;
-		border-bottom: 1rpx solid rgba(60, 60, 67, 0.08);
+		border-bottom: 1rpx solid #44403C;
 	}
 	.form-row.last {
 		border-bottom: none;
 	}
 	.form-label {
 		font-size: 30rpx;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		width: 180rpx;
 		flex-shrink: 0;
 	}
 	.form-input {
 		flex: 1;
 		font-size: 30rpx;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		text-align: right;
 	}
 	.form-placeholder {
-		color: #C7C7CC;
+		color: #57534E;
 		font-size: 28rpx;
 	}
 
@@ -151,7 +152,7 @@
 		padding: 40rpx 32rpx;
 	}
 	.btn-save {
-		background-color: #007AFF;
+		background-color: #EAB308;
 		border-radius: 20rpx;
 		padding: 24rpx 0;
 		text-align: center;
@@ -159,6 +160,6 @@
 	.btn-save-text {
 		font-size: 34rpx;
 		font-weight: 600;
-		color: #fff;
+		color: #0C0A09;
 	}
 </style>

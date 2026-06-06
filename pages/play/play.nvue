@@ -154,7 +154,7 @@
 	.arrow {
 		font-size: 64rpx;
 		line-height: 100rpx;
-		color: #ffffff;
+		color: #EAB308;
 		text-align: center;
 	}
 </style>

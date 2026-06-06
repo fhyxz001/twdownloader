@@ -13,10 +13,10 @@
 </script>
 
 <style>
-	/* 鍏ㄥ眬鏍峰紡 */
+	/* 全局样式 */
 	page {
-		background-color: #f4f1ea;
+		background-color: #0C0A09;
 		font-family: -apple-system, "Microsoft YaHei", "Segoe UI", sans-serif;
-		color: #191c1b;
+		color: #FAFAF9;
 	}
 </style>

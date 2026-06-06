@@ -43,6 +43,8 @@
 		flex-direction: column;
 		align-items: center;
 		padding: 40rpx;
+		background-color: #0C0A09;
+		min-height: 100vh;
 	}
 
 	.logo {
@@ -61,7 +63,8 @@
 	.title {
 		font-size: 40rpx;
 		font-weight: 800;
-		color: #191c1b;
+		color: #EAB308;
+		letter-spacing: 2rpx;
 	}
 
 	.entry-list {
@@ -72,15 +75,15 @@
 		display: flex;
 		align-items: center;
 		padding: 32rpx 28rpx;
-		background-color: rgba(255, 255, 255, 0.88);
-		border: 2rpx solid rgba(38, 42, 39, 0.12);
+		background-color: #1C1917;
+		border: 2rpx solid #44403C;
 		border-radius: 16rpx;
-		box-shadow: 0 8rpx 24rpx rgba(31, 28, 23, 0.08);
+		box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.4);
 	}
 
 	.entry-icon {
 		font-size: 48rpx;
-		color: #0f766e;
+		color: #EAB308;
 		margin-right: 24rpx;
 	}
 
@@ -94,17 +97,17 @@
 	.entry-title {
 		font-size: 30rpx;
 		font-weight: 700;
-		color: #191c1b;
+		color: #FAFAF9;
 	}
 
 	.entry-desc {
 		font-size: 24rpx;
-		color: #6b6f6a;
+		color: #A8A29E;
 	}
 
 	.entry-arrow {
 		font-size: 32rpx;
-		color: #0f766e;
+		color: #EAB308;
 		font-weight: 700;
 	}
 </style>

@@ -754,17 +754,17 @@
 </script>
 
 <style scoped>
-	/* ===== iOS Design System ===== */
+	/* ===== ProHub Dark Design System ===== */
 	.page {
 		display: flex;
 		flex-direction: column;
 		height: 100vh;
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 	}
 
 	/* ===== 大标题导航栏 ===== */
 	.nav-bar {
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 		padding-top: var(--status-bar-height, 44px);
 	}
 	.nav-content {
@@ -786,7 +786,8 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 50%;
-		background-color: rgba(0, 0, 0, 0.04);
+		background-color: #1C1917;
+		border: 1rpx solid #44403C;
 	}
 	.nav-btn-icon {
 		width: 44rpx;
@@ -795,7 +796,7 @@
 	.nav-large-title {
 		font-size: 68rpx;
 		font-weight: 700;
-		color: #000;
+		color: #EAB308;
 		letter-spacing: -1rpx;
 		line-height: 1.1;
 	}
@@ -804,7 +805,7 @@
 	.tab-scroll {
 		white-space: nowrap;
 		padding: 0 32rpx 24rpx;
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 	}
 	.tab-scroll::-webkit-scrollbar {
 		display: none;
@@ -823,25 +824,23 @@
 		height: 60rpx;
 		padding: 0 32rpx;
 		border-radius: 30rpx;
-		background-color: rgba(255, 255, 255, 0.55);
-		border: 1rpx solid rgba(255, 255, 255, 0.6);
-		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04), inset 0 0.5rpx 0 rgba(255, 255, 255, 0.8);
+		background-color: #1C1917;
+		border: 1rpx solid #44403C;
 		transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 	}
 	.tab-btn-text {
 		font-size: 26rpx;
 		font-weight: 500;
-		color: #8E8E93;
+		color: #A8A29E;
 		letter-spacing: 0.3rpx;
 		white-space: nowrap;
 	}
 	.tab-btn-active {
-		background-color: rgba(255, 255, 255, 0.92);
-		border-color: rgba(255, 255, 255, 0.95);
-		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1), 0 0 0 0.5rpx rgba(0, 0, 0, 0.04);
+		background-color: #EAB308;
+		border-color: #EAB308;
 	}
 	.tab-btn-active .tab-btn-text {
-		color: #007AFF;
+		color: #0C0A09;
 		font-weight: 600;
 	}
 
@@ -854,17 +853,17 @@
 		gap: 12rpx;
 	}
 	.status-hint.error .status-hint-text {
-		color: #FF3B30;
+		color: #EF4444;
 	}
 	.status-hint-text {
 		font-size: 28rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 	.spinner {
 		width: 32rpx;
 		height: 32rpx;
-		border: 4rpx solid rgba(0, 122, 255, 0.2);
-		border-top-color: #007AFF;
+		border: 4rpx solid rgba(234, 179, 8, 0.2);
+		border-top-color: #EAB308;
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 	}
@@ -900,20 +899,21 @@
 	/* ===== 卡片 ===== */
 	.card {
 		border-radius: 20rpx;
-		background-color: #fff;
+		background-color: #1C1917;
 		overflow: hidden;
-		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+		border: 1rpx solid #44403C;
 		transition: transform 0.15s ease, box-shadow 0.15s ease;
 	}
 	.card-selected {
-		box-shadow: 0 0 0 4rpx rgba(0, 122, 255, 0.3), 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+		box-shadow: 0 0 0 4rpx rgba(234, 179, 8, 0.4), 0 2rpx 12rpx rgba(0, 0, 0, 0.3);
+		border-color: #EAB308;
 	}
 
 	/* ===== 海报 ===== */
 	.poster {
 		position: relative;
 		min-height: 240rpx;
-		background-color: #1C1C1E;
+		background-color: #292524;
 		overflow: hidden;
 	}
 	.poster-img {
@@ -931,7 +931,7 @@
 		font-size: 64rpx;
 	}
 
-	/* 选中指示器 - iOS 圆形勾选 */
+	/* 选中指示器 */
 	.select-indicator {
 		position: absolute;
 		top: 16rpx;
@@ -951,16 +951,16 @@
 		transition: all 0.15s ease;
 	}
 	.indicator-checked {
-		background-color: #007AFF;
-		border-color: #007AFF;
+		background-color: #EAB308;
+		border-color: #EAB308;
 	}
 	.indicator-check {
-		color: #fff;
+		color: #0C0A09;
 		font-size: 24rpx;
 		font-weight: 700;
 	}
 
-	/* 播放按钮 - 毛玻璃风格 */
+	/* 播放按钮 */
 	.play-badge {
 		position: absolute;
 		right: 16rpx;
@@ -968,13 +968,13 @@
 		width: 56rpx;
 		height: 56rpx;
 		border-radius: 50%;
-		background-color: rgba(0, 0, 0, 0.45);
+		background-color: rgba(0, 0, 0, 0.55);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 	.play-badge-icon {
-		color: #fff;
+		color: #EAB308;
 		font-size: 22rpx;
 		margin-left: 4rpx;
 	}
@@ -986,11 +986,11 @@
 		bottom: 16rpx;
 		padding: 4rpx 12rpx;
 		border-radius: 8rpx;
-		background-color: rgba(0, 0, 0, 0.6);
+		background-color: rgba(0, 0, 0, 0.65);
 	}
 	.duration-text {
 		font-size: 20rpx;
-		color: #fff;
+		color: #FAFAF9;
 		font-weight: 500;
 	}
 
@@ -1001,7 +1001,7 @@
 	.card-title {
 		font-size: 26rpx;
 		font-weight: 600;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		line-height: 1.45;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
@@ -1015,7 +1015,7 @@
 	}
 	.stat-item {
 		font-size: 22rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 		font-weight: 400;
 	}
 
@@ -1032,13 +1032,13 @@
 	.empty-title {
 		font-size: 34rpx;
 		font-weight: 600;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		display: block;
 		margin-bottom: 8rpx;
 	}
 	.empty-desc {
 		font-size: 28rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 		display: block;
 	}
 
@@ -1052,11 +1052,11 @@
 	}
 	.load-more-text {
 		font-size: 26rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 	.load-more-text.end {
 		font-size: 24rpx;
-		color: #C7C7CC;
+		color: #57534E;
 	}
 
 	/* ===== 底部工具栏 ===== */
@@ -1066,9 +1066,9 @@
 		right: 0;
 		bottom: 0;
 		z-index: 50;
-		background-color: rgba(249, 249, 249, 0.94);
+		background-color: rgba(28, 25, 23, 0.95);
 		backdrop-filter: blur(20px);
-		border-top: 1rpx solid rgba(0, 0, 0, 0.08);
+		border-top: 1rpx solid #44403C;
 	}
 	.toolbar-inner {
 		display: flex;
@@ -1079,30 +1079,31 @@
 	}
 	.toolbar-btn {
 		font-size: 28rpx;
-		color: #007AFF;
+		color: #EAB308;
 		font-weight: 500;
 	}
 	.toolbar-divider {
 		width: 1rpx;
 		height: 32rpx;
-		background-color: rgba(60, 60, 67, 0.12);
+		background-color: #44403C;
 	}
 	.toolbar-selected {
 		flex: 1;
 		font-size: 26rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 	.toolbar-action {
 		font-size: 28rpx;
-		color: #fff;
+		color: #0C0A09;
 		font-weight: 600;
 		padding: 14rpx 36rpx;
 		border-radius: 20rpx;
-		background-color: #007AFF;
+		background-color: #EAB308;
 	}
 	.toolbar-action-disabled {
-		background-color: #007AFF;
-		opacity: 0.4;
+		background-color: #57534E;
+		opacity: 0.6;
+		color: #A8A29E;
 	}
 
 	/* ===== 下载进度条 ===== */
@@ -1112,13 +1113,13 @@
 	.progress-bar-track {
 		height: 8rpx;
 		border-radius: 4rpx;
-		background-color: rgba(0, 122, 255, 0.15);
+		background-color: rgba(234, 179, 8, 0.15);
 		overflow: hidden;
 	}
 	.progress-bar-fill {
 		height: 100%;
 		border-radius: 4rpx;
-		background-color: #007AFF;
+		background-color: #EAB308;
 		transition: width 0.3s ease;
 	}
 	.progress-info {
@@ -1129,15 +1130,15 @@
 	}
 	.progress-text {
 		font-size: 22rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 	.progress-percent {
 		font-size: 22rpx;
-		color: #007AFF;
+		color: #EAB308;
 		font-weight: 600;
 	}
 
-	/* ===== iOS Sheet 弹窗 ===== */
+	/* ===== Sheet 弹窗 ===== */
 	.sheet-mask {
 		position: fixed;
 		inset: 0;
@@ -1147,7 +1148,7 @@
 		pointer-events: none;
 	}
 	.sheet-mask-visible {
-		background-color: rgba(0, 0, 0, 0.4);
+		background-color: rgba(0, 0, 0, 0.6);
 		pointer-events: auto;
 	}
 	.sheet-container {
@@ -1156,7 +1157,7 @@
 		right: 0;
 		bottom: 0;
 		max-height: 80vh;
-		background-color: #F2F2F7;
+		background-color: #1C1917;
 		border-radius: 28rpx 28rpx 0 0;
 		transform: translateY(100%);
 		transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
@@ -1174,7 +1175,7 @@
 		width: 72rpx;
 		height: 8rpx;
 		border-radius: 4rpx;
-		background-color: rgba(0, 0, 0, 0.12);
+		background-color: #57534E;
 	}
 	.sheet-header {
 		padding: 8rpx 40rpx 20rpx;
@@ -1182,13 +1183,13 @@
 	.sheet-title {
 		font-size: 34rpx;
 		font-weight: 700;
-		color: #1C1C1E;
+		color: #FAFAF9;
 	}
 	.sheet-body {
 		padding: 0 32rpx;
 	}
 	.setting-group {
-		background-color: #fff;
+		background-color: #292524;
 		border-radius: 20rpx;
 		overflow: hidden;
 	}
@@ -1197,14 +1198,14 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 28rpx 32rpx;
-		border-bottom: 1rpx solid rgba(60, 60, 67, 0.08);
+		border-bottom: 1rpx solid #44403C;
 	}
 	.setting-row.last {
 		border-bottom: none;
 	}
 	.setting-label {
 		font-size: 30rpx;
-		color: #1C1C1E;
+		color: #FAFAF9;
 	}
 	.setting-value-wrap {
 		display: flex;
@@ -1213,24 +1214,24 @@
 	}
 	.setting-value {
 		font-size: 30rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 	.setting-arrow {
 		font-size: 36rpx;
-		color: #C7C7CC;
+		color: #57534E;
 		font-weight: 300;
 	}
 	.setting-input {
 		flex: 1;
 		font-size: 28rpx;
-		color: #1C1C1E;
+		color: #FAFAF9;
 		text-align: right;
 		padding: 0;
 		margin: 0;
 		background: transparent;
 	}
 	.setting-input-placeholder {
-		color: #C7C7CC;
+		color: #57534E;
 		font-size: 26rpx;
 	}
 	.sheet-footer {
@@ -1242,9 +1243,9 @@
 		text-align: center;
 		font-size: 34rpx;
 		font-weight: 600;
-		color: #fff;
+		color: #0C0A09;
 		padding: 24rpx 0;
 		border-radius: 20rpx;
-		background-color: #007AFF;
+		background-color: #EAB308;
 	}
 </style>

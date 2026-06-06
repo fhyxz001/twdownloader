@@ -4,7 +4,7 @@
 		<view class="section">
 			<view class="toggle-row">
 				<text class="toggle-label">全局代理</text>
-				<switch :checked="proxyEnabled" @change="onToggleProxy" color="#007AFF" />
+				<switch :checked="proxyEnabled" @change="onToggleProxy" color="#EAB308" />
 			</view>
 			<text class="toggle-hint">开启后将使用选中的代理方案</text>
 		</view>
@@ -176,15 +176,16 @@
 <style scoped>
 	.page {
 		min-height: 100vh;
-		background-color: #F2F2F7;
+		background-color: #0C0A09;
 		padding-bottom: env(safe-area-inset-bottom);
 	}
 
 	.section {
 		margin: 24rpx 32rpx;
-		background-color: #fff;
+		background-color: #1C1917;
 		border-radius: 20rpx;
 		overflow: hidden;
+		border: 1rpx solid #44403C;
 	}
 
 	.toggle-row {
@@ -196,13 +197,13 @@
 	.toggle-label {
 		font-size: 32rpx;
 		font-weight: 600;
-		color: #1C1C1E;
+		color: #FAFAF9;
 	}
 	.toggle-hint {
 		display: block;
 		padding: 0 32rpx 24rpx;
 		font-size: 24rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 	}
 
 	.section-header {
@@ -210,21 +211,21 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 28rpx 32rpx;
-		border-bottom: 1rpx solid rgba(60, 60, 67, 0.08);
+		border-bottom: 1rpx solid #44403C;
 	}
 	.section-title {
 		font-size: 30rpx;
 		font-weight: 600;
-		color: #1C1C1E;
+		color: #FAFAF9;
 	}
 	.add-btn {
 		padding: 8rpx 24rpx;
 		border-radius: 16rpx;
-		background-color: rgba(0, 122, 255, 0.1);
+		background-color: rgba(234, 179, 8, 0.12);
 	}
 	.add-btn-text {
 		font-size: 26rpx;
-		color: #007AFF;
+		color: #EAB308;
 		font-weight: 500;
 	}
 
@@ -235,7 +236,7 @@
 		display: flex;
 		align-items: center;
 		padding: 24rpx 32rpx;
-		border-bottom: 1rpx solid rgba(60, 60, 67, 0.06);
+		border-bottom: 1rpx solid #44403C;
 	}
 	.scheme-item:last-child {
 		border-bottom: none;
@@ -248,20 +249,20 @@
 		width: 44rpx;
 		height: 44rpx;
 		border-radius: 50%;
-		border: 3rpx solid #C7C7CC;
+		border: 3rpx solid #57534E;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		transition: all 0.2s ease;
 	}
 	.radio-checked {
-		border-color: #007AFF;
+		border-color: #EAB308;
 	}
 	.radio-dot {
 		width: 24rpx;
 		height: 24rpx;
 		border-radius: 50%;
-		background-color: #007AFF;
+		background-color: #EAB308;
 	}
 
 	.scheme-info {
@@ -271,12 +272,12 @@
 		display: block;
 		font-size: 30rpx;
 		font-weight: 500;
-		color: #1C1C1E;
+		color: #FAFAF9;
 	}
 	.scheme-addr {
 		display: block;
 		font-size: 24rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 		margin-top: 4rpx;
 	}
 
@@ -287,17 +288,17 @@
 	.action-btn {
 		padding: 8rpx 20rpx;
 		border-radius: 12rpx;
-		background-color: rgba(0, 122, 255, 0.08);
+		background-color: rgba(234, 179, 8, 0.1);
 	}
 	.action-text {
 		font-size: 24rpx;
-		color: #007AFF;
+		color: #EAB308;
 	}
 	.action-delete {
-		background-color: rgba(255, 59, 48, 0.08);
+		background-color: rgba(239, 68, 68, 0.1);
 	}
 	.action-text-delete {
-		color: #FF3B30;
+		color: #EF4444;
 	}
 
 	.empty {
@@ -307,12 +308,12 @@
 	.empty-text {
 		display: block;
 		font-size: 30rpx;
-		color: #8E8E93;
+		color: #A8A29E;
 		margin-bottom: 8rpx;
 	}
 	.empty-hint {
 		display: block;
 		font-size: 24rpx;
-		color: #C7C7CC;
+		color: #57534E;
 	}
 </style>
