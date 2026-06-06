@@ -4,7 +4,7 @@
 		<view class="nav-bar">
 			<view class="nav-content">
 				<view class="nav-header-row">
-					<text class="nav-large-title">Xhub</text>
+					<text class="nav-large-title">探索</text>
 					<view class="nav-actions">
 						<view class="nav-btn" @tap="toggleSelectMode">
 							<image class="nav-btn-icon" :src="selectMode ? '/static/select_blue.png' : '/static/select.png'" mode="aspectFit" />
