@@ -977,11 +977,11 @@
 	/* 已下载标志 */
 	.downloaded-badge {
 		position: absolute;
-		top: 16rpx;
-		right: 16rpx;
+		top: 0;
+		right: 0;
 		z-index: 2;
-		width: 48rpx;
-		height: 48rpx;
+		width: 72rpx;
+		height: 72rpx;
 	}
 
 	/* 选中指示器 */
