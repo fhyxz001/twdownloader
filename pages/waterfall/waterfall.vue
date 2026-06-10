@@ -79,6 +79,13 @@
 							<view v-else class="poster-fallback">
 								<text class="fallback-icon">&#9654;</text>
 							</view>
+							<!-- 已下载标志 -->
+							<image
+								class="downloaded-badge"
+								src="/static/dowloaded.png"
+								mode="aspectFit"
+								v-if="downloadedIds.has(item.id)"
+							/>
 							<!-- 选中指示器 -->
 							<view class="select-indicator" v-if="selectMode" @tap.stop="toggleSelect(item.id)">
 								<view :class="['indicator-circle', selectedIds.has(item.id) ? 'indicator-checked' : '']">
@@ -122,6 +129,13 @@
 							<view v-else class="poster-fallback">
 								<text class="fallback-icon">&#9654;</text>
 							</view>
+							<!-- 已下载标志 -->
+							<image
+								class="downloaded-badge"
+								src="/static/dowloaded.png"
+								mode="aspectFit"
+								v-if="downloadedIds.has(item.id)"
+							/>
 							<view class="select-indicator" v-if="selectMode" @tap.stop="toggleSelect(item.id)">
 								<view :class="['indicator-circle', selectedIds.has(item.id) ? 'indicator-checked' : '']">
 									<text v-if="selectedIds.has(item.id)" class="indicator-check">&#10003;</text>
@@ -314,6 +328,7 @@
 				items: [],
 				selectMode: false,
 				selectedIds: new Set(),
+				downloadedIds: new Set(),
 				loading: false,
 				loadingMore: false,
 				refreshing: false,
@@ -404,11 +419,13 @@
 		},
 		onLoad() {
 			this.restoreConfig();
+			this.loadDownloadedIds();
 			this.tabs = [{ code: '', name: '全部' }, ...ALL_TAGS.map(t => ({ code: t.code, name: t.name }))];
 			this.loadData();
 		},
 		onShow() {
 			this.applyProxy();
+			this.loadDownloadedIds();
 		},
 		onBackPress() {
 			if (this.showSettings) {
@@ -423,6 +440,14 @@
 			},
 			goToProxy() {
 				uni.navigateTo({ url: '/pages/proxy/proxy' });
+			},
+			loadDownloadedIds() {
+				try {
+					const records = JSON.parse(uni.getStorageSync('download_records') || '[]');
+					this.downloadedIds = new Set(records.map(r => r.id).filter(Boolean));
+				} catch (e) {
+					this.downloadedIds = new Set();
+				}
 			},
 			formatDuration(seconds) {
 				const s = Number(seconds);
@@ -733,6 +758,7 @@
 						downloadedAt: Date.now(),
 					});
 					uni.setStorageSync('download_records', JSON.stringify(records));
+					this.downloadedIds.add(item.id);
 				} catch (e) {}
 			},
 
@@ -946,6 +972,16 @@
 	.fallback-icon {
 		color: rgba(255, 255, 255, 0.25);
 		font-size: 64rpx;
+	}
+
+	/* 已下载标志 */
+	.downloaded-badge {
+		position: absolute;
+		top: 16rpx;
+		right: 16rpx;
+		z-index: 2;
+		width: 48rpx;
+		height: 48rpx;
 	}
 
 	/* 选中指示器 */
